@@ -9,6 +9,10 @@ __pycache__/
 # generated outputs and private data: metrics CSVs carry previews of local sessions, harness runs hold transcripts
 out/
 data/raw/
+data/contexts.jsonl
+.ipynb_checkpoints/
+notebooks/.ipynb_checkpoints/
+.env
 
 # saved X/Twitter page that seeded the first exemplar (raw HTML, kept local)
 /1

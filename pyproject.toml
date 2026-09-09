@@ -1,27 +1,31 @@
 [project]
 name = "cotlegibility"
-version = "0.2.0"
-description = "A small, inspectable study of reasoning and agent-message intelligibility"
+version = "0.3.0"
+description = "A small matched study of agent-handoff surprisal"
 requires-python = ">=3.11"
 dependencies = [
-    "wordfreq==3.1.1",
+    "huggingface-hub==1.30.0",
+    "pyarrow>=19",
+    "openai==3.11.0",
+    "torch==2.14.0",
+    "transformers==5.17.0",
+    "numpy==2.5.3",
+    "pandas==3.0.5",
     "matplotlib==3.11.1",
+    "jupyterlab>=4",
+    "ipykernel>=6",
 ]
 
 [project.optional-dependencies]
-reference = ["torch==2.14.0", "transformers==5.17.0"]
-api = ["anthropic==1.4.0", "openai==3.11.0"]
-dev = ["pytest"]
-
-[project.scripts]
-cot-study = "cotlegibility.__main__:main"
+dev = ["pytest>=8", "nbclient>=0.10"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+pythonpath = ["."]
 
 [build-system]
 requires = ["setuptools>=68"]
 build-backend = "setuptools.build_meta"
 
-[tool.setuptools.packages.find]
-include = ["cotlegibility*"]
+[tool.setuptools]
+packages = []

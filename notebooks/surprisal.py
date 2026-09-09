@@ -1,38 +1,54 @@
-"""Pinned reference-LM surprisal with correct shifted-label overlap accounting."""
+"""The sole metric: fixed GPT-2 surprisal in bits per Unicode character of prose."""
 from __future__ import annotations
 
-import math
 from functools import lru_cache
+import math
+import re
 
 MODEL = "gpt2"
 REVISION = "607a30d783dfa663caf39e06633721c8d4cfcd7e"
-VERSION = "surprisal-v2-bos"
+VERSION = "bpc-v3-original-prose"
+STRIDE = 512
+# A deliberately small, fixed policy; this is not a parser or an English detector.
+NONPROSE = re.compile(
+    r"```[\s\S]*?(?:```|\Z)|~~~[\s\S]*?(?:~~~|\Z)|`[^`\n]+`"
+    r"|(?:https?://|www\.)\S+"
+    r"|(?<!\S)(?:[A-Za-z]:\\|~?/|\./|\.\./)\S+"
+    r"|(?<!\S)[\w.@+-]+(?:/[^\s/]+)+\.[A-Za-z0-9]+(?=\s|$|[,;:)])"
+)
+
+
+def prose_only(text):
+    """Replace each code/URL/path match with one space; otherwise leave prose intact."""
+    return NONPROSE.sub(" ", text).strip()
 
 
 @lru_cache(maxsize=2)
-def load(model_name=MODEL, revision=REVISION, device="auto"):
+def load(device="auto"):
     import torch
     from transformers import AutoModelForCausalLM, AutoTokenizer
 
     if device == "auto":
         device = "mps" if torch.backends.mps.is_available() else "cuda" if torch.cuda.is_available() else "cpu"
-    tokenizer = AutoTokenizer.from_pretrained(model_name, revision=revision)
-    model = AutoModelForCausalLM.from_pretrained(model_name, revision=revision).to(device).eval()
+    tokenizer = AutoTokenizer.from_pretrained(MODEL, revision=REVISION)
+    model = AutoModelForCausalLM.from_pretrained(MODEL, revision=REVISION).to(device).eval()
     return tokenizer, model, device
 
 
-def bits_per_char(text, model_name=MODEL, revision=REVISION, stride=512, device="auto"):
+def bits_per_char(text, *, device="auto", stride=STRIDE):
+    """Score every token once, including the first, using BOS and overlapping windows."""
     import torch
 
-    tokenizer, model, device = load(model_name, revision, device)
+    if not text:
+        return {"bits_per_char": None, "total_bits": 0.0, "tokens": 0, "characters": 0}
+    tokenizer, model, device = load(device)
     token_ids = tokenizer.encode(text, add_special_tokens=False)
     limit = getattr(model.config, "n_positions", None) or model.config.max_position_embeddings
     if not 1 <= stride < limit:
         raise ValueError(f"stride must be between 1 and {limit - 1}")
-    bos = tokenizer.bos_token_id
-    if bos is None:
+    if tokenizer.bos_token_id is None:
         raise ValueError("The reference tokenizer must define a BOS token")
-    ids = torch.tensor([[bos] + token_ids], device=device)
+    ids = torch.tensor([[tokenizer.bos_token_id] + token_ids], device=device)
     total_bits, scored, previous_end = 0.0, 0, 0
     with torch.inference_mode():
         for begin in range(0, len(token_ids) + 1, stride):
@@ -52,8 +68,5 @@ def bits_per_char(text, model_name=MODEL, revision=REVISION, stride=512, device=
                 break
     if scored != len(token_ids):
         raise AssertionError(f"Scored {scored} of {len(token_ids)} tokens")
-    return {"total_bits": total_bits, "tokens": scored,
-            "bits_per_char": total_bits / len(text) if text else None,
-            "bits_per_token": total_bits / scored if scored else None,
-            "ref_model": model_name, "ref_revision": revision, "device": device,
-            "stride": stride, "scorer_version": VERSION}
+    return {"bits_per_char": total_bits / len(text), "total_bits": total_bits,
+            "tokens": scored, "characters": len(text), "device": device}

@@ -1,191 +1,160 @@
-# Agent-text intelligibility
+# Agent-handoff surprisal
 
-A small, descriptive study of whether frontier-model reasoning summaries and
-agent-to-agent messages are getting harder to read. The aim is to find and inspect
-changes in the text—not to estimate the probability of losing control of a model.
+A small, controlled study of whether newer models write less predictable
+agent-to-agent messages. **One metric: pinned GPT-2 bits per character of prose.**
+One Matplotlib graph: model-family release date versus mean surprisal, with 95%
+task-bootstrap intervals. Higher is not automatically less intelligible.
 
-The headline result is **one Matplotlib graph of mean reference surprisal over model
-release dates, with 95% task-bootstrap confidence intervals**. Higher means more
-unexpected writing to a fixed reference model, not a calibrated loss of intelligibility.
+## The project
 
-The project has one message format and five commands. The main metric and optional diagnostics are:
+- `scripts/prepare_tasks.py` freezes five pilot and 50 disjoint main-study tasks.
+- `scripts/collect.py` collects one outgoing handoff per task/model, without running a child.
+- `notebooks/analysis.ipynb` reads raw responses, scores prose locally, and draws the graph.
+- `notebooks/surprisal.py` is the small, tested reference scorer.
+- `data/models.json` holds the three requested models, generation settings, and sourced release dates.
+- `data/task_manifest.json` records the pinned dataset, sampling seed, task IDs, and context hashes.
+- `tests/` covers preparation, safe collection, scoring, bootstrap, and notebook execution.
 
-- **Reference surprisal:** how unexpected the prose is to a fixed GPT-2, in bits per character.
-- **Spacing difference:** how much total surprisal falls after inserting likely missing spaces, divided by the original character count.
-- **Optional passage judge:** how much effort is needed to decode words, reconstruct syntax, and recover intended meaning, with exact supporting quotations.
+No agent framework, judge, spacing repair, multi-metric report, local-log importer,
+provider router, or benchmark execution harness. Collection and analysis are independent.
 
-Glued-word share is retained as a diagnostic. Character-frequency entropy, gzip,
-readability formulas, composite scores, agent execution, experimental-factor
-matrices, and routing services are no longer part of the workflow.
+## Install
 
-## Start locally—no API calls
+From the repository root (Python 3.11+; collector supports macOS/Linux):
 
 ```sh
 python -m venv .venv
 source .venv/bin/activate
-pip install -e '.[reference,api,dev]'
-python -m cotlegibility import --exemplars data/exemplars --out out/demo/messages.jsonl
-python -m cotlegibility analyze out/demo/messages.jsonl --out out/demo
-open out/demo/report.html
+pip install -e '.[dev]'
 ```
 
-The first reference-scoring run downloads the pinned GPT-2 revision. Subsequent
-runs use the local model and measurement cache. `--surface-only` skips GPT-2;
-it is useful for checking imports and reports, but is not the full measurement.
-Use `--device cpu` for consistent device selection, or leave automatic selection on.
-
-The existing three public fragments are **selected illustrations, not a sample
-from which to infer model-wide prevalence**. Their original text and source notes
-are unchanged. Try the separate, explicitly synthetic sanity set:
+## 1. Prepare tasks — no paid API calls
 
 ```sh
-python -m cotlegibility analyze data/sanity.jsonl --out out/sanity
+python scripts/prepare_tasks.py
 ```
 
-Its 20 cases span ordinary prose, removed spaces, shuffled words, and underspecified
-meaning. They are informal checks, not a validated intelligibility benchmark.
+Downloads only the pinned test Parquet from
+[SWE-bench Lite BM25 13K](https://huggingface.co/datasets/princeton-nlp/SWE-bench_Lite_bm25_13K).
+It uses issue descriptions and already-retrieved code; no repository cloning or Docker.
 
-## Use existing messages
+Tasks are sampled without replacement in shuffled repository rounds. Small
+repositories can exhaust, so balance is approximate. This is a deliberate
+cross-repository sample, not prevalence-weighted software usage. The script:
+
+- reads only task identity, source revision, issue, and formatted context columns;
+- extracts the code section, removing patch-writing instructions/example patches;
+- never includes solution/test patches, grading labels, or discussion hints;
+- preserves the issue and code without an LLM rewrite;
+- saves exact packets to `data/contexts.jsonl` and the selection to `data/task_manifest.json`.
+
+Identical reruns are safe. Different selections require another `--out` directory;
+existing frozen data is not overwritten. Generated context packets are ignored by Git
+and can be reproduced from the pinned source; the small selection manifest is tracked.
+The upstream retrieval budget is 13,000 reference-tokenizer **code** tokens;
+issue text adds more. Do not budget these as 2,000-token prompts.
+
+## 2. Preview, then explicitly collect
 
 ```sh
-python -m cotlegibility import --codex ~/.codex/sessions --out out/local/messages.jsonl
-python -m cotlegibility import --claude ~/.claude/projects --out out/claude/messages.jsonl
-python -m cotlegibility analyze out/local/messages.jsonl --out out/local
+python scripts/collect.py
 ```
 
-An import requires explicit input paths. It does not contact a model. Multiple
-sources can be combined using repeated `--jsonl FILE`, alongside the other flags.
-Sources and channels remain separate in the report. Importing a narrower directory
-or preparing a small Sample JSONL is the simplest way to limit a personal study.
+Default: read-only preview of five pilot tasks × three models = 15 requests.
+It needs no API key and creates no raw run.
 
-Every message requires `id`, `provider`, `model`, `channel`, `source`, and exact
-`text`. Optional fields are `timestamp`, `context_id`, `session_id`, `status`, and
-`meta`. Put task context for the judge in `meta.reader_context`. Status is one of
-`ok`, `missing`, `error`, or `unobservable`. Event IDs remove copied events, never
-identical text from distinct runs. Conflicting records with the same ID fail loudly.
-
-Local transcripts can contain private code and conversations. Outputs and raw data
-are git-ignored; the HTML also contains original text. **Do not publish it without
-review.** Reference scoring stays local. Opting into a judge sends source passages,
-nearby text, and any reader context to that provider.
-
-## Collect a small matched comparison
-
-`data/contexts.jsonl` contains six frozen delegation tasks. `models.json` is an
-editable, three-model starting matrix, not a claim about API availability or model
-release order. Check that the exact model IDs are available to your account. Keep
-settings fixed within each comparison; equal effort labels do not imply equal compute.
+Only the following command spends money, after you set `OPENAI_API_KEY`:
 
 ```sh
-python -m cotlegibility collect --dry-run
-# Set OPENAI_API_KEY, and ANTHROPIC_API_KEY only if adding Claude models.
-python -m cotlegibility collect --replicates 1 --max-calls 18 --out out/collection
-python -m cotlegibility analyze out/collection/messages.jsonl --out out/collection
+python scripts/collect.py --execute --max-calls 15
 ```
 
-Each request elicits one `spawn_agent` handoff; the child is never run. Prompts and
-tool schemas are fixed across models. This compares **visible handoff writing in
-this protocol**, not hidden CoT or native coding-agent behavior. Six tasks × three
-models × one replicate is 18 requests. Start there before increasing replicates.
+Uses the [official Responses API](https://developers.openai.com/api/docs/guides/function-calling)
+with a strict `spawn_agent(message)` function. The worker is described as receiving
+the code excerpts and handoff, but not the issue or parent conversation. The child
+is never executed. There are no brevity, shorthand, or readability instructions.
 
-Collection uses direct official endpoints, with no silent retries or fallback
-models. Exact requests, full responses, usage, requested/served model, and settings
-are saved in `raw/`. Request hashes make reruns resumable. A per-run call limit is
-not a dollar limit; output limits/settings are in `models.json`. Failed attempts are
-cached too. To retry failures, use a new output directory (or deliberately move the
-specific failed cache file aside). Unattempted cells remain visible as missing.
-Changing the model/context matrix rebuilds `messages.jsonl` for that matrix while
-leaving earlier raw records intact.
+Requests go directly to OpenAI, with no retries or provider/model fallback.
+The catalog starts with GPT-5.5, GPT-5.6 Sol, and GPT-6 Astra, medium reasoning,
+and an 8,192-token output cap. Verify model access for your account.
+[Hidden reasoning counts toward output usage and the cap](https://developers.openai.com/api/docs/guides/reasoning).
+Equal effort labels do not imply equal compute.
 
-## Plot the single-metric timeline
+`--max-calls` bounds **new calls in this invocation**; per-request output caps
+bound output tokens. These are **not a dollar ceiling**: input tokens also cost
+money. Inspect actual pilot usage before scaling up. There is no Batch adapter in
+version one; [direct Batch](https://developers.openai.com/api/docs/guides/batch)
+is a possible later cost optimization.
 
-After collecting and analyzing matched messages:
+Each run stores `run.json` plus one `request-<hash>.json` per attempt under
+`data/raw/pilot/`. The record is written before the call and finalized afterward,
+preserving exact requests, full responses, timestamps, provider request IDs,
+usage, returned model IDs, and failures. Completed records are not overwritten.
+An OS lock prevents concurrent collectors in one directory.
+
+Reruns skip **every** existing attempt, including errors and interrupted/uncertain
+calls. An API error stops the run. Inspect it before resuming; uncertain calls may
+have been billed. Do not delete records to force retries. A changed configuration
+requires a new output directory and constitutes a separate run.
+
+## 3. Analyze locally
 
 ```sh
-python -m cotlegibility plot out/collection
-open out/collection/surprisal.png
+jupyter lab notebooks/analysis.ipynb
 ```
 
-The chart has one point per model: mean original-prose GPT-2 BPC, averaging
-messages/repetitions within each task first, then tasks equally. Error bars are
-95% percentile bootstrap intervals from 10,000 resamples of whole tasks, with
-the same resampled task IDs across models. It uses only tasks scored for **every
-dated model** in the release catalog; missing cells are reported. One task yields
-a point without an interval. Fewer than 10 tasks triggers a pilot-sample warning.
-The six starter tasks are a pilot, not sufficient evidence for a broad historical claim.
+Choose the `.venv` Python kernel. The notebook defaults to `data/raw/pilot`.
+**Run All never calls a paid API.** GPT-2 weights/tokenizer download once from
+Hugging Face; scoring then runs locally on Apple GPU, CUDA, or CPU.
 
-`data/model_releases.json` supplies exact model IDs, display labels, public-release
-dates, and source URLs. Edit it to match the models in your study; it is separate
-from API generation settings. Unknown/undated models are reported as excluded,
-never placed at their message timestamps. Dates currently index family launches,
-not necessarily the served snapshots of later moving aliases. The bootstrap does
-not measure uncertainty about the validity of BPC as an intelligibility proxy.
+The notebook displays coverage and token usage, scores original prose, computes
+the paired task bootstrap, plots the timeline, and shows low/middle/high-scoring
+examples. Code/URLs/common paths are excluded by one visible regex; spacing is not
+repaired. Characters include retained spaces/punctuation and are not UTF-8 bytes.
 
-The output is a single PNG, with no browser or extra plotting dependency.
-`surprisal.jsonl` records exact plotted values, intervals,
-unit-level scores, selected event IDs, coverage, release sources, scoring provenance,
-and bootstrap settings. It does not copy message text into the chart. Use
-`--out PATH.png`, `--resamples N`, and `--seed N` to customize exports.
+Only tasks scored for every requested model enter the graph. Failed, malformed,
+truncated, and all-code responses have no score. One task has no CI; fewer than
+ten is flagged as a pilot. The notebook refuses mixed settings or served snapshots.
+Source IDs and one task/model observation—not tokens or repeated snippets—are the units.
 
-For an explicitly **observational** plot of existing logs, use session clusters:
+Exports under `out/analysis-pilot/`:
+
+- `surprisal.png` — the single graph;
+- `samples.jsonl` — exact handoffs, scored prose, statuses, usage, and BPC;
+- `summary.json` — plotted values, matched task IDs/scores, coverage, reference/software versions, and run hash.
+
+After inspecting the pilot for realism, preview and explicitly collect the main set:
 
 ```sh
-python -m cotlegibility plot out/local --source codex_rollout --unit session
+python scripts/collect.py --split main
+python scripts/collect.py --split main --execute --max-calls 150
 ```
 
-Session means receive equal weight; each model's sessions are bootstrapped
-independently. Workloads are not matched and the chart says so. `--channel` chooses
-one message type (default `subagent_prompt`). Sources/channels are never pooled;
-mixed generation configurations or served snapshots within a model fail loudly.
-The selected public fragments and synthetic controls cannot populate the default
-matched-model chart. An empty chart states the missing-data limitation explicitly.
+Change the notebook's `RUN_DIR` to `ROOT / "data/raw/main"` and `OUT_DIR` to
+`ROOT / "out/analysis-main"`. Pilot and main are never pooled.
 
-## Add one fixed reader, optionally
+## Interpretation and preservation
+
+This measures **initial-investigation handoff writing under one fixed protocol**,
+not hidden CoT, long-running autonomous behavior, task success, human comprehension,
+or loss-of-control risk. Public benchmark tasks may have appeared in training.
+Jargon, language, formatting, and incomplete retrieval can affect surprisal.
+Inspect representative examples; do not tune the procedure to obtain a preferred ordering.
+
+The 95% intervals describe task-sampling variation, not certainty that this proxy
+measures intelligibility. Related tasks can remain dependent; missing-task exclusion
+can bias results. Family release dates do not reconstruct historical alias behavior.
+Full definitions and processing steps are in the notebook.
+
+The previous implementation is recoverable at commit `5c92e6b` (the earlier
+checkpoint at `research-v1-checkpoint` also remains). Old handmade contexts are
+preserved in `data/legacy_contexts.jsonl`; existing `data/exemplars/`,
+`data/sanity.jsonl`, and ignored `out/` data are unchanged and never mixed into
+the new study. Raw requests and notebook exports are Git-ignored; review them
+before sharing.
 
 ```sh
-python -m cotlegibility analyze out/collection/messages.jsonl --out out/collection \
-  --judge-model gpt-5.6-sol --judge-parameters '{"reasoning":{"effort":"medium"},"max_output_tokens":4096}' \
-  --judge-limit 30
+python -m pytest -q
 ```
 
-The judge uses anchored `none / minor / substantial / unresolved` categories for
-words, syntax, and meaning. Non-`none` ratings must quote exact source text; malformed
-answers remain errors, not low-difficulty scores. Missing context is flagged separately.
-Producer identity is not supplied as metadata, but may be inferable from the text.
-
-The request budget is shared round-robin across source/model/channel/settings
-groups, with stable hash ordering of passages within each. It is a balanced
-convenience sample. Report denominators explicitly exclude unjudged passages.
-Keep the same judge/settings across producer models; a changed served-model ID is
-saved per passage. `--judge-limit 0` reuses cached judgments without new API requests.
-As with collection, failed judgments are cached. No judge is run unless requested.
-
-## Read the results
-
-Each analysis directory contains:
-
-| File | Purpose |
-| --- | --- |
-| `report.html` | Self-contained local report: distributions, coverage, exact passages, restored text, evidence |
-| `summary.csv` | Group counts, median/P90 message BPC, spacing diagnostics, judged-passage difficulty fractions |
-| `distributions.png` | Dots for individual messages and bars for medians; no implied chronological order |
-| `measured_messages.jsonl`, `passages.jsonl` | Exact originals, provenance, source offsets, and individual measurements |
-| `manifest.jsonl`, `cache/` | Versions, settings, dataset hash, and reusable reference/judge results |
-
-`python -m cotlegibility report out/collection` rebuilds presentation without model
-calls. Start with model distributions, then inspect high-surprisal passages and a
-few ordinary ones. Do not combine selected screenshots, synthetic controls, and
-collected/logged messages into one prevalence number. For a historical trend, use
-verified snapshot/release metadata, matched tasks/settings/channels, and more than
-one session or task per model. Collection timestamp alone is not model chronology.
-
-See [METHODS.md](docs/METHODS.md) for definitions, preprocessing, and limitations.
-Run tests with `.venv/bin/python -m pytest`; tests never make live API requests.
-
-## Checkpoint and scope
-
-The previous implementation is preserved at tag `research-v1-checkpoint` (commit
-`62d7e2a`). Its experiment runners and conclusion-oriented research documents were
-removed from the active tree; existing exemplars and ignored generated data were
-preserved. For example, `git show research-v1-checkpoint:docs/RESEARCH_PLAN.md`
-reads the old plan without restoring the old machinery.
+Tests use fixtures/mocked HTTP responses and never make paid API requests.

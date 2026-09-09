@@ -1,0 +1,344 @@
+{
+  "dataset": "princeton-nlp/SWE-bench_Lite_bm25_13K",
+  "revision": "8d4bee9605fd8d72f14373a7f64d070c92f575c8",
+  "parquet": "data/test-00000-of-00001.parquet",
+  "preparation": "swe-handoff-context-v1",
+  "seed": 20260909,
+  "sampling": "Shuffled repository round-robin without replacement, pilot then main",
+  "eligible": 300,
+  "excluded": [],
+  "candidate_hash": "53a3cb639f7756dff3730c16ef2fb0f79ce5bd06c30757d3796dc354220b091d",
+  "contexts_hash": "3d6600182857764a66ef112ba2197be372be2d377248b73830d76842c13cc567",
+  "tasks": [
+    {
+      "id": "pallets__flask-4045",
+      "split": "pilot",
+      "repo": "pallets/flask",
+      "context_hash": "e5cdf87b56f350772076ee5136e53ae8738978f2046a7ab30e115cd8c223b5c4"
+    },
+    {
+      "id": "pylint-dev__pylint-7080",
+      "split": "pilot",
+      "repo": "pylint-dev/pylint",
+      "context_hash": "a73b1d59705696aa3011605288146e368d9d4803fa0da3e0fe929184413bc751"
+    },
+    {
+      "id": "mwaskom__seaborn-3010",
+      "split": "pilot",
+      "repo": "mwaskom/seaborn",
+      "context_hash": "9520cf8b2165869af127635b2d1153b7d8f4fc9574c8d78b92510554f850b65a"
+    },
+    {
+      "id": "psf__requests-2674",
+      "split": "pilot",
+      "repo": "psf/requests",
+      "context_hash": "5bd230883ec6d8f101b7702f259e8ff990d5dc3e2e6b61e739840ef99f3031b8"
+    },
+    {
+      "id": "pydata__xarray-5131",
+      "split": "pilot",
+      "repo": "pydata/xarray",
+      "context_hash": "594aaeb73c6b3141aa9d133cfee1f370c8313f4ed509ffcaac5051cabf5b1712"
+    },
+    {
+      "id": "pydata__xarray-4094",
+      "split": "main",
+      "repo": "pydata/xarray",
+      "context_hash": "83d88ee621163ba3926efccce8d3cc5720305c36e0666835d4ec61748df67948"
+    },
+    {
+      "id": "scikit-learn__scikit-learn-13584",
+      "split": "main",
+      "repo": "scikit-learn/scikit-learn",
+      "context_hash": "d2bae0b197e3ba6d64c430d3bfa52a63ffa65007d1459c7ec98a32f7d89e2c98"
+    },
+    {
+      "id": "pylint-dev__pylint-7228",
+      "split": "main",
+      "repo": "pylint-dev/pylint",
+      "context_hash": "1ffd195cff644f3e6d54ba6ce6cd63ec408ad59cea1968a9e189c53f0f3fd270"
+    },
+    {
+      "id": "pytest-dev__pytest-5692",
+      "split": "main",
+      "repo": "pytest-dev/pytest",
+      "context_hash": "f1b208e2a1a2306296c0c732f42cef5238c3e9a9919d681717b2353abe028385"
+    },
+    {
+      "id": "astropy__astropy-12907",
+      "split": "main",
+      "repo": "astropy/astropy",
+      "context_hash": "e6f87667c7e4a37c01049abe9572c34411d807dbf03eb7478094e91c2729b148"
+    },
+    {
+      "id": "pallets__flask-5063",
+      "split": "main",
+      "repo": "pallets/flask",
+      "context_hash": "104e82945d1b8a1dd67fce73a491d7425625f7326ae7012abf3380ca001c4bf8"
+    },
+    {
+      "id": "psf__requests-2148",
+      "split": "main",
+      "repo": "psf/requests",
+      "context_hash": "87d15002c1d06c665924fa9ac0ae93ee584054e427f0dc64c20c6c5f3910b27f"
+    },
+    {
+      "id": "sphinx-doc__sphinx-10325",
+      "split": "main",
+      "repo": "sphinx-doc/sphinx",
+      "context_hash": "10549cdbccbaeb7b83e51365d2fc08caf028aaed82d6a68f44ed3b2e0ada1277"
+    },
+    {
+      "id": "sympy__sympy-21847",
+      "split": "main",
+      "repo": "sympy/sympy",
+      "context_hash": "f8ed2a78a71e97bdd0af7bbe913e879672b5ee88ff70d51517369ac251e63d80"
+    },
+    {
+      "id": "django__django-13964",
+      "split": "main",
+      "repo": "django/django",
+      "context_hash": "b30ef5bb65e1d1f9230123b2b3562f7490a1f27f4ce229d80d0a69afc6054318"
+    },
+    {
+      "id": "matplotlib__matplotlib-25311",
+      "split": "main",
+      "repo": "matplotlib/matplotlib",
+      "context_hash": "87b4152211be76bafe752fc28d01b571d1461ca9b6b114c69ddea0f97db84d90"
+    },
+    {
+      "id": "mwaskom__seaborn-3190",
+      "split": "main",
+      "repo": "mwaskom/seaborn",
+      "context_hash": "2a355da93df36f631353a64507fe3ed250242fca843e18923794fede352bbd1f"
+    },
+    {
+      "id": "pytest-dev__pytest-7490",
+      "split": "main",
+      "repo": "pytest-dev/pytest",
+      "context_hash": "d083696939898e9fe283a8a16b6095198584a548ae2411ffc4e31014aa99d4a5"
+    },
+    {
+      "id": "sympy__sympy-11870",
+      "split": "main",
+      "repo": "sympy/sympy",
+      "context_hash": "438c1928fc7cf13deacc3c4e889f404c10793a5c8e067ff17144892d8e2b4c4a"
+    },
+    {
+      "id": "psf__requests-2317",
+      "split": "main",
+      "repo": "psf/requests",
+      "context_hash": "6bc799ca03e9b9b265c261b3c28ec3a910aed9ba5699e0ebec5d28440397f5b2"
+    },
+    {
+      "id": "scikit-learn__scikit-learn-25570",
+      "split": "main",
+      "repo": "scikit-learn/scikit-learn",
+      "context_hash": "e75c2996da6de436174f1f6174726b7c37e415362c1d4c1fe4e7ceab5cab1d3f"
+    },
+    {
+      "id": "mwaskom__seaborn-2848",
+      "split": "main",
+      "repo": "mwaskom/seaborn",
+      "context_hash": "80cf0061824d46b52dc47e4e73b81b386b294c056527f29c03d404d516567d51"
+    },
+    {
+      "id": "django__django-10924",
+      "split": "main",
+      "repo": "django/django",
+      "context_hash": "a6be822790c4a7f7f2a1db2e155e217e27a2d459f5938880284559d0f39810ac"
+    },
+    {
+      "id": "sphinx-doc__sphinx-8713",
+      "split": "main",
+      "repo": "sphinx-doc/sphinx",
+      "context_hash": "a0df7d80f2419b09468ca35974768624e0baaf2c2a835b530fc65fec01919e90"
+    },
+    {
+      "id": "matplotlib__matplotlib-25079",
+      "split": "main",
+      "repo": "matplotlib/matplotlib",
+      "context_hash": "ca636303a3ec191992889feb15ab3aa052a8175e144956b8dd671002acf4ab68"
+    },
+    {
+      "id": "pydata__xarray-4493",
+      "split": "main",
+      "repo": "pydata/xarray",
+      "context_hash": "bc4e74a26255e00ce75ab8ab2990813ed87306e8dea017de6fb7fe97bccd1d1c"
+    },
+    {
+      "id": "pallets__flask-4992",
+      "split": "main",
+      "repo": "pallets/flask",
+      "context_hash": "ae6735847844aadd85fa5864eda46ff31c8ace5e8a20cb292647c9ad2ab7ca6c"
+    },
+    {
+      "id": "pylint-dev__pylint-5859",
+      "split": "main",
+      "repo": "pylint-dev/pylint",
+      "context_hash": "89232fec3bf7caf8fdb37ea7005d7258b5d41b3ec1014dbc1da91ec823f60f00"
+    },
+    {
+      "id": "astropy__astropy-7746",
+      "split": "main",
+      "repo": "astropy/astropy",
+      "context_hash": "7f244a8263b21891c2f5cfdbc169ab1ce2e775421b3c5f5f512b887da41b825d"
+    },
+    {
+      "id": "mwaskom__seaborn-3407",
+      "split": "main",
+      "repo": "mwaskom/seaborn",
+      "context_hash": "46ed9499c0a0c7c7e4a88f45b1a3ffea1f88d356e7b06b1b48a484ad6997582e"
+    },
+    {
+      "id": "pylint-dev__pylint-7114",
+      "split": "main",
+      "repo": "pylint-dev/pylint",
+      "context_hash": "19928ca17936fdc79d4485a7c89da7dc006dfb84f7d0892da7d454be12089155"
+    },
+    {
+      "id": "pytest-dev__pytest-8906",
+      "split": "main",
+      "repo": "pytest-dev/pytest",
+      "context_hash": "711d7df4ee9a24b4298a6890a64a1678c200033ce786168d65da294a5e9025c9"
+    },
+    {
+      "id": "scikit-learn__scikit-learn-15512",
+      "split": "main",
+      "repo": "scikit-learn/scikit-learn",
+      "context_hash": "72587bf5e8f257507da6326e0e63754a50ae2418b723ecb231862bc8f4dac554"
+    },
+    {
+      "id": "pydata__xarray-4248",
+      "split": "main",
+      "repo": "pydata/xarray",
+      "context_hash": "2211372dc3f027a75b69c370482e3bc5a486c1e3652bd01c58e27d4f3fd0a0b2"
+    },
+    {
+      "id": "sympy__sympy-13031",
+      "split": "main",
+      "repo": "sympy/sympy",
+      "context_hash": "10f7f5b93cc4ad4525c783a4c9cc2e3f6507817ee43ab1db10722346d348e172"
+    },
+    {
+      "id": "sphinx-doc__sphinx-8506",
+      "split": "main",
+      "repo": "sphinx-doc/sphinx",
+      "context_hash": "16d705437b304118bb0be6d660a441b768d47d7ec7149dd7984e4031df5121ef"
+    },
+    {
+      "id": "astropy__astropy-14182",
+      "split": "main",
+      "repo": "astropy/astropy",
+      "context_hash": "3e5c07024f97f6777c5977b884935cdc9077064b86dc9287e9955f96faebeb19"
+    },
+    {
+      "id": "django__django-12908",
+      "split": "main",
+      "repo": "django/django",
+      "context_hash": "62ab3c0821813c1fcf151452aabb5d4be4c19ae898e0714d7da625a800604c66"
+    },
+    {
+      "id": "matplotlib__matplotlib-23314",
+      "split": "main",
+      "repo": "matplotlib/matplotlib",
+      "context_hash": "3483acbd64507ef4bcf97021f92ef42207b1733a787b57accfbd0cfa473667c0"
+    },
+    {
+      "id": "psf__requests-863",
+      "split": "main",
+      "repo": "psf/requests",
+      "context_hash": "fa267622d16fb9184dfea6980d89ed451a3e5c75e2dfe7508d6eb543a5f4ed12"
+    },
+    {
+      "id": "psf__requests-3362",
+      "split": "main",
+      "repo": "psf/requests",
+      "context_hash": "5591e417e106feffa88d629f996157659d8a1118b379b5c4df0d046c37890ceb"
+    },
+    {
+      "id": "pydata__xarray-3364",
+      "split": "main",
+      "repo": "pydata/xarray",
+      "context_hash": "06feab2ddb1ea8dfdef6fa7a95f6b2c5d25c9f17971cb4852460f57353ec48bf"
+    },
+    {
+      "id": "matplotlib__matplotlib-26011",
+      "split": "main",
+      "repo": "matplotlib/matplotlib",
+      "context_hash": "478084bfac5800910e3a0ed17e7e971f232cff7aa002a85402660dc40d99a717"
+    },
+    {
+      "id": "sphinx-doc__sphinx-8282",
+      "split": "main",
+      "repo": "sphinx-doc/sphinx",
+      "context_hash": "69fd903aa1262655b27e455737f61b0929e6a73415338918feaafa66a9a289a0"
+    },
+    {
+      "id": "sympy__sympy-20442",
+      "split": "main",
+      "repo": "sympy/sympy",
+      "context_hash": "80382087d343b22dc374cb61f2cbb57660d1eb38222b7a3cc289d96f41f58f3c"
+    },
+    {
+      "id": "astropy__astropy-14365",
+      "split": "main",
+      "repo": "astropy/astropy",
+      "context_hash": "c68cd40df7859b10a15dd38c714ee2fe31b985ed6cf7e54574b90657a7c20706"
+    },
+    {
+      "id": "scikit-learn__scikit-learn-10297",
+      "split": "main",
+      "repo": "scikit-learn/scikit-learn",
+      "context_hash": "a7e1e856e8467ae73f4190da45fa62c8dffd59ff1755c618380532ec2e67c09c"
+    },
+    {
+      "id": "pytest-dev__pytest-5495",
+      "split": "main",
+      "repo": "pytest-dev/pytest",
+      "context_hash": "b2f32bf7c7aa0f0ee003e395c99fe3a87f4f49b52619336e1e610cc51099d614"
+    },
+    {
+      "id": "pylint-dev__pylint-6506",
+      "split": "main",
+      "repo": "pylint-dev/pylint",
+      "context_hash": "4f412c57c2044020bf4fe931d6a9f040d255264889533d8ac42161e342be5083"
+    },
+    {
+      "id": "django__django-15400",
+      "split": "main",
+      "repo": "django/django",
+      "context_hash": "165e32a475972eee400dad786dac0e3e7348fb253f8995b7e0f1b8462c187e94"
+    },
+    {
+      "id": "psf__requests-1963",
+      "split": "main",
+      "repo": "psf/requests",
+      "context_hash": "26b534726ef32b3a28910bf7035dc1ac760d3f349ab053a42ffbe042ebd4e710"
+    },
+    {
+      "id": "sphinx-doc__sphinx-8273",
+      "split": "main",
+      "repo": "sphinx-doc/sphinx",
+      "context_hash": "6b827d8d47a2c256d030b018c6505bc3ee94a34d17e900ec0cc9af13f94b452b"
+    },
+    {
+      "id": "django__django-15781",
+      "split": "main",
+      "repo": "django/django",
+      "context_hash": "1461a7418b07106ed9977a39436d5f63472cd24c77ddc593c30579ba05ebbfa4"
+    },
+    {
+      "id": "pylint-dev__pylint-7993",
+      "split": "main",
+      "repo": "pylint-dev/pylint",
+      "context_hash": "b6e0e5f3698bb8b362b072531adebf486d2e4dac24b7dc925668a62b6418b488"
+    },
+    {
+      "id": "scikit-learn__scikit-learn-10508",
+      "split": "main",
+      "repo": "scikit-learn/scikit-learn",
+      "context_hash": "48b963deb6c633c503087b07208aeb1ec2aa8835ca0d98a53be2609a9138e93b"
+    }
+  ]
+}

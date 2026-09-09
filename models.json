@@ -1,5 +1,0 @@
-[
-  {"id": "gpt-5.5", "parameters": {"reasoning": {"effort": "medium"}, "max_output_tokens": 8192}},
-  {"id": "gpt-5.6-sol", "parameters": {"reasoning": {"effort": "medium"}, "max_output_tokens": 8192}},
-  {"id": "gpt-6-astra", "parameters": {"reasoning": {"effort": "medium"}, "max_output_tokens": 8192}}
-]
