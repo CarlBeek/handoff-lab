@@ -1,4 +1,4 @@
-"""Four small commands: import, collect, analyze, report. API work is always explicit."""
+"""Import, collect, analyze, report, and plot. API work is always explicit."""
 from __future__ import annotations
 
 import argparse
@@ -42,6 +42,15 @@ def main(argv=None):
     analysis.add_argument("--judge-limit", type=int, default=30, help="Maximum NEW judge requests; 0 uses cached results only")
     report = commands.add_parser("report", help="Rebuild HTML/CSV/figure from saved measurements, without model calls")
     report.add_argument("directory", type=Path)
+    plot = commands.add_parser("plot", help="Matplotlib timeline of mean BPC with 95%% cluster-bootstrap CIs")
+    plot.add_argument("directory", type=Path, help="An analysis directory containing measured_messages.jsonl and manifest.jsonl")
+    plot.add_argument("--models", type=Path, default=Path("data/model_releases.json"))
+    plot.add_argument("--out", type=Path, help="PNG path; defaults to DIRECTORY/surprisal.png")
+    plot.add_argument("--source", default="controlled", help="One source; sources are never pooled")
+    plot.add_argument("--channel", default="subagent_prompt")
+    plot.add_argument("--unit", choices=("context", "session"), default="context", help="Matched tasks, or observational session clusters")
+    plot.add_argument("--resamples", type=positive, default=10000)
+    plot.add_argument("--seed", type=int, default=0)
     args = parser.parse_args(argv)
     try:
         if args.command == "import":
@@ -78,6 +87,10 @@ def main(argv=None):
             analyze(samples, args.out, reference=not args.surface_only, passage_chars=args.passage_chars, device=args.device,
                     judge_model=args.judge_model, judge_parameters=args.judge_parameters, judge_limit=args.judge_limit)
             render(args.out)
+        elif args.command == "plot":
+            from .plot import render
+            render(args.directory, json.loads(args.models.read_text()), args.out, source=args.source, channel=args.channel,
+                   unit=args.unit, resamples=args.resamples, seed=args.seed)
         else:
             from .report import render
             render(args.directory)

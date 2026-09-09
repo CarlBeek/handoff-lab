@@ -4,7 +4,11 @@ A small, descriptive study of whether frontier-model reasoning summaries and
 agent-to-agent messages are getting harder to read. The aim is to find and inspect
 changes in the text—not to estimate the probability of losing control of a model.
 
-The project now has one message format, four commands, and three measurements:
+The headline result is **one Matplotlib graph of mean reference surprisal over model
+release dates, with 95% task-bootstrap confidence intervals**. Higher means more
+unexpected writing to a fixed reference model, not a calibrated loss of intelligibility.
+
+The project has one message format and five commands. The main metric and optional diagnostics are:
 
 - **Reference surprisal:** how unexpected the prose is to a fixed GPT-2, in bits per character.
 - **Spacing difference:** how much total surprisal falls after inserting likely missing spaces, divided by the original character count.
@@ -92,6 +96,49 @@ cached too. To retry failures, use a new output directory (or deliberately move 
 specific failed cache file aside). Unattempted cells remain visible as missing.
 Changing the model/context matrix rebuilds `messages.jsonl` for that matrix while
 leaving earlier raw records intact.
+
+## Plot the single-metric timeline
+
+After collecting and analyzing matched messages:
+
+```sh
+python -m cotlegibility plot out/collection
+open out/collection/surprisal.png
+```
+
+The chart has one point per model: mean original-prose GPT-2 BPC, averaging
+messages/repetitions within each task first, then tasks equally. Error bars are
+95% percentile bootstrap intervals from 10,000 resamples of whole tasks, with
+the same resampled task IDs across models. It uses only tasks scored for **every
+dated model** in the release catalog; missing cells are reported. One task yields
+a point without an interval. Fewer than 10 tasks triggers a pilot-sample warning.
+The six starter tasks are a pilot, not sufficient evidence for a broad historical claim.
+
+`data/model_releases.json` supplies exact model IDs, display labels, public-release
+dates, and source URLs. Edit it to match the models in your study; it is separate
+from API generation settings. Unknown/undated models are reported as excluded,
+never placed at their message timestamps. Dates currently index family launches,
+not necessarily the served snapshots of later moving aliases. The bootstrap does
+not measure uncertainty about the validity of BPC as an intelligibility proxy.
+
+The output is a single PNG, with no browser or extra plotting dependency.
+`surprisal.jsonl` records exact plotted values, intervals,
+unit-level scores, selected event IDs, coverage, release sources, scoring provenance,
+and bootstrap settings. It does not copy message text into the chart. Use
+`--out PATH.png`, `--resamples N`, and `--seed N` to customize exports.
+
+For an explicitly **observational** plot of existing logs, use session clusters:
+
+```sh
+python -m cotlegibility plot out/local --source codex_rollout --unit session
+```
+
+Session means receive equal weight; each model's sessions are bootstrapped
+independently. Workloads are not matched and the chart says so. `--channel` chooses
+one message type (default `subagent_prompt`). Sources/channels are never pooled;
+mixed generation configurations or served snapshots within a model fail loudly.
+The selected public fragments and synthetic controls cannot populate the default
+matched-model chart. An empty chart states the missing-data limitation explicitly.
 
 ## Add one fixed reader, optionally
 

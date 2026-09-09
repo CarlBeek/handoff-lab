@@ -1,0 +1,23 @@
+[
+  {
+    "id": "gpt-5.5",
+    "label": "GPT-5.5",
+    "release_date": "2026-04-23",
+    "release_source": "https://openai.com/index/introducing-gpt-5-5/",
+    "release_note": "Public ChatGPT/Codex launch; API availability followed April 24. Family launch date, not a guarantee about later alias snapshots."
+  },
+  {
+    "id": "gpt-5.6-sol",
+    "label": "GPT-5.6 Sol",
+    "release_date": "2026-07-09",
+    "release_source": "https://openai.com/index/gpt-5-6/",
+    "release_note": "General-availability launch, not the June 26 limited preview. Family launch date; later updates are not individually dated here."
+  },
+  {
+    "id": "gpt-6-astra",
+    "label": "GPT-6 Astra",
+    "release_date": "2026-09-03",
+    "release_source": "https://openai.com/index/safety-overview-gpt-6-astra/",
+    "release_note": "Public launch announcement with staged rollout. Family launch date, not a guarantee about later alias snapshots."
+  }
+]

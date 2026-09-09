@@ -71,7 +71,39 @@ fused runs. It is a diagnostic with a heuristic denominator, not measured word e
   snapshot. Parsers depend on log formats and are covered by small fixture tests,
   not a guarantee about every historical client version.
 
-## Optional judge and presentation
+## Single-metric Matplotlib timeline
+
+The headline metric is original-prose reference BPC, with no spacing correction,
+judge weighting, or composite transformation. For model m and task t, average the
+message-level BPC values of its repetitions. The plotted model point is the
+unweighted mean of those task means. Long messages and tasks with more repetitions
+therefore do not automatically dominate the estimate.
+
+Use tasks with valid scores for every dated model in the supplied release catalog.
+Resample those task IDs with replacement 10,000 times, preserving model pairing,
+and recompute each model mean. The 2.5th and 97.5th percentiles form a nominal 95%
+interval. Never resample tokens or passages as independent observations. Record
+the seed, resample count, complete-task set, and missing-data coverage. Removing
+incomplete tasks can still create selection bias, which the interval does not fix.
+For two models' difference, use the paired resampled differences; overlap of their
+individual intervals is not a significance test.
+
+For local logs, the explicit session mode averages messages per session and then
+sessions per model, with independent session-level resampling. This is observational:
+workload, settings, and harness changes can explain apparent model differences.
+Both interval procedures assume sampled units are informative about a relevant
+task/session population. Curated tiny sets do not confer model-wide 95% coverage.
+One independent unit has no interval; fewer than 10 receives a pilot warning.
+
+Release dates are supplied with source URLs, never inferred from observation dates.
+The starter catalog uses public family-launch dates. Later alias responses are not
+guaranteed historical snapshots, so this is a release-indexed comparison of the
+observed outputs, not a reconstruction of behavior at launch. Sources, channels,
+and protocols are not silently mixed. Returned snapshots and generation settings
+must be consistent within each plotted model. All chart data and settings are
+exported alongside the Matplotlib PNG.
+
+## Optional judge and passage inspection
 
 The judge rates word decoding, syntax reconstruction, and intended meaning separately
 with four anchored grades. Exact quotations support difficult ratings. It also flags
