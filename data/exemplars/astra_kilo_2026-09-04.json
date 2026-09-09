@@ -1,0 +1,15 @@
+{
+  "id": "exemplar:astra:kilo:2026-09-04",
+  "provider": "openai",
+  "model": "gpt-6-astra (Kilo preview)",
+  "channel": "subagent_prompt",
+  "source": "screenshot",
+  "timestamp": "2026-09-04",
+  "meta": {
+    "label": "GPT-6 Astra → sub-agent\n(Kilo blog fragment, 2026-09-04)",
+    "post_url": "https://blog.kilo.ai/p/gpt-6-astra-what-we-learned-previewing",
+    "note": "Fragment quoted in the post (ellipses in original); produced under a message-size limit in Kilo's swarm prototype.",
+    "transcription": "verbatim from the post, fetched 2026-09-09"
+  },
+  "text": "FreshGPU-free source-onlyresearch, noedits/execution. Userasksongoingresearchwhileimplementation. Currentdeadline17:30Z... Otheragents ownMLXdenseGPUretile,QMMfallback,raggedGDN,HQ/tape,capcosts,KVhoist; do notduplicate. Investigate a DIFFERENT orchestrationthesis..."
+}

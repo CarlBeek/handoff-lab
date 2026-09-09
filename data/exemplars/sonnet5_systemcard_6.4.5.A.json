@@ -1,0 +1,15 @@
+{
+  "id": "exemplar:sonnet5:system-card:6.4.5.A",
+  "provider": "anthropic",
+  "model": "claude-sonnet-5 (system card)",
+  "channel": "reasoning_raw",
+  "source": "system_card",
+  "timestamp": "2026-06-30",
+  "meta": {
+    "label": "Claude Sonnet 5 thinking\n(system card transcript 6.4.5.A)",
+    "post_url": "https://www-cdn.anthropic.com/283ef97c476cf442c91d9a37d5b214242a55bb92/Claude%20Sonnet%205%20System%20Card.pdf",
+    "note": "Excerpt of a thinking trace from a math problem in a behavioural evaluation; card text: 'strangely structured passages of reasoning that omit spaces'. Line breaks from PDF extraction removed.",
+    "transcription": "extracted from the PDF with pypdf, 2026-09-09"
+  },
+  "text": "SoFOReachBAND,theAT-RISKsub-problem(kROWSxkSPECIALcolumns,ANTI-DIAGONALHOLES)NEEDS2(k-1)TILES-BUTWAIT,THISSUB-GRIDsSPECIALCOLUMNSAREN'TCONSECUTIVE(THEYREspacedkAPARTGLOBALLY:columnsT,k+T,2k+T,...)-SOA\"TILE\"INTHISSUB-PROBLEMWOULDACTUALLYNEEDtoBEARECTANGLESPANNINGCONSECUTIVE GLOBALcolumnsTOBEAVALIDTILEINTHEORIGINALGRID-BUTIFTHESPECIALCOLUMNSAREN'TCONSECUTIVE,WECAN'TDIRECTLYTREATTHISSUBGRIDASASTANDALONESTAIRCASEPROBLEM(SINCETILESMUSTBECONTIGUOUSINTHEFULLGRID,NOTJUSTWITHINTHESUBSETOFSPECIALCOLUMNS)!"
+}
