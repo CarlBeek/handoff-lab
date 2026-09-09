@@ -1,0 +1,14 @@
+# environment and build artefacts
+.venv/
+__pycache__/
+*.pyc
+*.egg-info/
+.pytest_cache/
+.DS_Store
+
+# generated outputs and private data: metrics CSVs carry previews of local sessions, harness runs hold transcripts
+out/
+data/raw/
+
+# saved X/Twitter page that seeded the first exemplar (raw HTML, kept local)
+/1

@@ -1,0 +1,21 @@
+{
+  "id": "exemplar:astra:lukaspet:2026-09-08",
+  "provider": "openai",
+  "model": "gpt-6-astra (as claimed in post)",
+  "channel": "subagent_prompt",
+  "source": "screenshot",
+  "timestamp": "2026-09-07T21:16:41-07:00",
+  "meta": {
+    "post_url": "https://x.com/lukaspet/status/2097472258071839152",
+    "image_url": "https://pbs.twimg.com/media/HRu3e36bQAAPGCk.jpg",
+    "posted": "2026-09-08T23:48:50Z",
+    "transcription": "manual, from screenshot; a few glyphs (arrow, em dash) are best-effort",
+    "ui_labels": [
+      "Sub-Agent Service",
+      "[Message from Parent Agent]"
+    ],
+    "note": "Model identity is the poster's claim, not verified from logs.",
+    "label": "GPT-6 Astra → sub-agent\n(Petersson screenshot, 2026-09-08)"
+  },
+  "text": "NEWowner21:14classicUXmandate; implementdisplayarchitectureinownedUI: native/original toggle; portraitweekday-specificsourceimages; auto landscape→fullMondayFridayweek, returnportraitrestoreselectedday/mode. ModernofficialPNGsourceNOTyetverified (agent19959investigating), DO NOTfakeaPNGorclaimofficialimageconnected. Add typedimage-artifact seam(localURI,width,height,day/week,selection/revision/freshness/sourcekind) and explicitOriginalunavailable/demo state untilrealimageprovided; nativefixtureweekviewstillfunctional. Canbuildtestablepurepresentationselectorfororientation/mode/selectedday identity; addtestsrotation/togglerestore/mismatchedimageidentityreject. UIrootmustautoWeekonlandscape—notrequiretapWeek. UserprefersnativeUISegmentedControl: parentcaninstall@react-native-segmented-control/segmented-control ifneeded; askbeforepackageimport. No newsource/provider/network/docswritesoutsideownscope. ExistingdocsNATIVE_QAupdatecurrentlimits. Preserveaccessibilitysafeareas/darkmode. Parentwillnotclaimimage/nativeproofuntilreal. DoNOTgeneratefakeofficialPNG."
+}

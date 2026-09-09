@@ -1,0 +1,24 @@
+[project]
+name = "cotlegibility"
+version = "0.1.0"
+description = "Measuring the legibility of chain-of-thought and inter-agent messages across frontier models"
+requires-python = ">=3.11"
+dependencies = [
+    "tiktoken>=0.9",
+    "wordfreq>=3.1",
+    "pandas>=2.2",
+    "numpy",
+    "matplotlib",
+]
+
+[project.optional-dependencies]
+ppl = ["torch", "transformers"]
+api = ["anthropic>=1.0", "openai>=1.60"]
+dev = ["pytest"]
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["cotlegibility*"]
