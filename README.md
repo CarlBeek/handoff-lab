@@ -1,70 +1,144 @@
-# CoT legibility analysis
+# Agent-text intelligibility
 
-Tooling for a METR-style report on how legible frontier models' chain-of-thought and, especially,
-their messages to sub-agents are, and how that changes across model generations (OpenAI GPT-5.x → GPT-6,
-Anthropic Claude 4.x → Claude 5 / Fable).
+A small, descriptive study of whether frontier-model reasoning summaries and
+agent-to-agent messages are getting harder to read. The aim is to find and inspect
+changes in the text—not to estimate the probability of losing control of a model.
 
-The research design lives in `docs/RESEARCH_PLAN.md`. The code is a small Python package:
+The project now has one message format, four commands, and three measurements:
 
-```
-cotlegibility/
-  schema.py              Sample: one text with provider / model / channel / source metadata
-  sources/codex.py       ~/.codex/sessions rollouts  -> spawn_agent messages, wait_agent replies, summaries
-  sources/claude_code.py ~/.claude/projects jsonl    -> Agent-tool prompts, sidechain replies, thinking summaries
-  metrics/surface.py     deterministic metrics: glued-word share, function-word rate, whitespace, tokens, gzip ...
-  metrics/perplexity.py  bits/char under a pinned open reference LM (gpt2 by default)
-  metrics/judge.py       reader-model protocols: reconstruction, directive recovery, readability rating
-scripts/analyze_local.py  run everything observable on this machine, write out/metrics.csv + out/fig_surface.png
-data/exemplars/           public examples with provenance: the GPT-6 Astra screenshot (Petersson), the Kilo Astra fragment, the Sonnet 5 system-card thinking transcript
-```
+- **Reference surprisal:** how unexpected the prose is to a fixed GPT-2, in bits per character.
+- **Spacing difference:** how much total surprisal falls after inserting likely missing spaces, divided by the original character count.
+- **Optional passage judge:** how much effort is needed to decode words, reconstruct syntax, and recover intended meaning, with exact supporting quotations.
 
-## Setup
+Glued-word share is retained as a diagnostic. Character-frequency entropy, gzip,
+readability formulas, composite scores, agent execution, experimental-factor
+matrices, and routing services are no longer part of the workflow.
 
-```
-python3 -m venv .venv && .venv/bin/pip install -e ".[ppl]"     # add [api] for the judge / replay experiments
-.venv/bin/python scripts/analyze_local.py --ppl                 # ~2 min with the GPT-2 reference model
-```
+## Start locally—no API calls
 
-Reference-LM scoring runs on Apple MPS when available. API-based protocols need `OPENAI_API_KEY` /
-`ANTHROPIC_API_KEY` (or `ant auth login`) and are not run by the local script.
-
-## Harness runs (free under the Claude and ChatGPT subscriptions)
-
-```
-.venv/bin/python scripts/run_harness.py --dry-run
-.venv/bin/python scripts/run_harness.py --harness claude --models claude-sonnet-5 --tasks probe
-.venv/bin/python scripts/run_harness.py --harness claude --models claude-opus-4-6 claude-opus-5 claude-sonnet-5 claude-fable-5-1 --tasks all --condition default human_reads
-.venv/bin/python scripts/analyze_local.py --runs out/harness_runs.jsonl --ppl
+```sh
+python -m venv .venv
+source .venv/bin/activate
+pip install -e '.[reference,api,dev]'
+python -m cotlegibility import --exemplars data/exemplars --out out/demo/messages.jsonl
+python -m cotlegibility analyze out/demo/messages.jsonl --out out/demo
+open out/demo/report.html
 ```
 
-Each run gets a fresh synthetic repo (`scripts/make_target_repo.py`), tasks come from `tasks/tasks.json`, and the
-manifest `out/harness_runs.jsonl` lets the analysis join transcripts to model / task / condition by `cwd`.
-Claude Code logs parent → sub-agent prompts in plaintext. Codex ≥ 0.153 encrypts them (MultiAgent v2), so
-Codex runs only yield user-facing text, reasoning summaries and spawn counts; OpenAI-side sub-agent messages
-come from the API replay below.
+The first reference-scoring run downloads the pinned GPT-2 revision. Subsequent
+runs use the local model and measurement cache. `--surface-only` skips GPT-2;
+it is useful for checking imports and reports, but is not the full measurement.
+Use `--device cpu` for consistent device selection, or leave automatic selection on.
 
-## Experiments
+The existing three public fragments are **selected illustrations, not a sample
+from which to infer model-wide prevalence**. Their original text and source notes
+are unchanged. Try the separate, explicitly synthetic sanity set:
 
+```sh
+python -m cotlegibility analyze data/sanity.jsonl --out out/sanity
 ```
-.venv/bin/python scripts/replay_subagent.py --dry-run          # extract real pre-spawn contexts, no API calls
-.venv/bin/python scripts/replay_subagent.py --models gpt-5.5 claude-opus-5 --audience none human_reads --limit 5
+
+Its 20 cases span ordinary prose, removed spaces, shuffled words, and underspecified
+meaning. They are informal checks, not a validated intelligibility benchmark.
+
+## Use existing messages
+
+```sh
+python -m cotlegibility import --codex ~/.codex/sessions --out out/local/messages.jsonl
+python -m cotlegibility import --claude ~/.claude/projects --out out/claude/messages.jsonl
+python -m cotlegibility analyze out/local/messages.jsonl --out out/local
 ```
 
-## Running through Surplus Intelligence
+An import requires explicit input paths. It does not contact a model. Multiple
+sources can be combined using repeated `--jsonl FILE`, alongside the other flags.
+Sources and channels remain separate in the report. Importing a narrower directory
+or preparing a small Sample JSONL is the simplest way to limit a personal study.
 
-All models in the study are available through one router, https://www.surplusintelligence.ai (OpenAI-compatible
-`/v1`, plus an Anthropic-shaped `/anthropic/v1/messages`). Setup:
+Every message requires `id`, `provider`, `model`, `channel`, `source`, and exact
+`text`. Optional fields are `timestamp`, `context_id`, `session_id`, `status`, and
+`meta`. Put task context for the judge in `meta.reader_context`. Status is one of
+`ok`, `missing`, `error`, or `unobservable`. Event IDs remove copied events, never
+identical text from distinct runs. Conflicting records with the same ID fail loudly.
 
-1. Sign in at surplusintelligence.ai (Twitter, Discord, or wallet connect; a wallet is created for you).
-2. Fund the wallet with USDC on Base (Coinbase Onramp or MoonPay in-app, or bridge) and approve USDC for
-   SettlementV2 on the Buy page. Funds stay in your wallet.
-3. Copy the API key from the Buy page (prefix `inf_`) and `export SURPLUS_API_KEY=inf_...`.
-4. Pre-flight: `.venv/bin/python scripts/surplus_smoke.py --plan` (no key needed) then
-   `.venv/bin/python scripts/surplus_smoke.py --live --models gpt-5.6-luna claude-sonnet-5` (a few cents).
-5. Pilot: `.venv/bin/python scripts/replay_subagent.py --models gpt-5.6-sol gpt-6-astra claude-opus-5 claude-fable-5-1 --audience none openai_guidance --limit 5`.
+Local transcripts can contain private code and conversations. Outputs and raw data
+are git-ignored; the HTML also contains original text. **Do not publish it without
+review.** Reference scoring stays local. Opting into a judge sends source passages,
+nearby text, and any reader context to that provider.
 
-Provenance rules baked into `cotlegibility/providers/surplus.py`: requests are pinned to first-party-hosted
-sellers (`anthropic`, `openai`, `bedrock`) via the `provider` allow-list; the `x-si-*` route headers, the
-served model id, usage and reasoning-token counts are stored with every result; Claude models go through the
-Anthropic surface so extended thinking is real. Surplus does not attest model identity or quality, so run
-`scripts/surplus_smoke.py --sweep <model>` to compare sellers before trusting a cheaper route.
+## Collect a small matched comparison
+
+`data/contexts.jsonl` contains six frozen delegation tasks. `models.json` is an
+editable, three-model starting matrix, not a claim about API availability or model
+release order. Check that the exact model IDs are available to your account. Keep
+settings fixed within each comparison; equal effort labels do not imply equal compute.
+
+```sh
+python -m cotlegibility collect --dry-run
+# Set OPENAI_API_KEY, and ANTHROPIC_API_KEY only if adding Claude models.
+python -m cotlegibility collect --replicates 1 --max-calls 18 --out out/collection
+python -m cotlegibility analyze out/collection/messages.jsonl --out out/collection
+```
+
+Each request elicits one `spawn_agent` handoff; the child is never run. Prompts and
+tool schemas are fixed across models. This compares **visible handoff writing in
+this protocol**, not hidden CoT or native coding-agent behavior. Six tasks × three
+models × one replicate is 18 requests. Start there before increasing replicates.
+
+Collection uses direct official endpoints, with no silent retries or fallback
+models. Exact requests, full responses, usage, requested/served model, and settings
+are saved in `raw/`. Request hashes make reruns resumable. A per-run call limit is
+not a dollar limit; output limits/settings are in `models.json`. Failed attempts are
+cached too. To retry failures, use a new output directory (or deliberately move the
+specific failed cache file aside). Unattempted cells remain visible as missing.
+Changing the model/context matrix rebuilds `messages.jsonl` for that matrix while
+leaving earlier raw records intact.
+
+## Add one fixed reader, optionally
+
+```sh
+python -m cotlegibility analyze out/collection/messages.jsonl --out out/collection \
+  --judge-model gpt-5.6-sol --judge-parameters '{"reasoning":{"effort":"medium"},"max_output_tokens":4096}' \
+  --judge-limit 30
+```
+
+The judge uses anchored `none / minor / substantial / unresolved` categories for
+words, syntax, and meaning. Non-`none` ratings must quote exact source text; malformed
+answers remain errors, not low-difficulty scores. Missing context is flagged separately.
+Producer identity is not supplied as metadata, but may be inferable from the text.
+
+The request budget is shared round-robin across source/model/channel/settings
+groups, with stable hash ordering of passages within each. It is a balanced
+convenience sample. Report denominators explicitly exclude unjudged passages.
+Keep the same judge/settings across producer models; a changed served-model ID is
+saved per passage. `--judge-limit 0` reuses cached judgments without new API requests.
+As with collection, failed judgments are cached. No judge is run unless requested.
+
+## Read the results
+
+Each analysis directory contains:
+
+| File | Purpose |
+| --- | --- |
+| `report.html` | Self-contained local report: distributions, coverage, exact passages, restored text, evidence |
+| `summary.csv` | Group counts, median/P90 message BPC, spacing diagnostics, judged-passage difficulty fractions |
+| `distributions.png` | Dots for individual messages and bars for medians; no implied chronological order |
+| `measured_messages.jsonl`, `passages.jsonl` | Exact originals, provenance, source offsets, and individual measurements |
+| `manifest.jsonl`, `cache/` | Versions, settings, dataset hash, and reusable reference/judge results |
+
+`python -m cotlegibility report out/collection` rebuilds presentation without model
+calls. Start with model distributions, then inspect high-surprisal passages and a
+few ordinary ones. Do not combine selected screenshots, synthetic controls, and
+collected/logged messages into one prevalence number. For a historical trend, use
+verified snapshot/release metadata, matched tasks/settings/channels, and more than
+one session or task per model. Collection timestamp alone is not model chronology.
+
+See [METHODS.md](docs/METHODS.md) for definitions, preprocessing, and limitations.
+Run tests with `.venv/bin/python -m pytest`; tests never make live API requests.
+
+## Checkpoint and scope
+
+The previous implementation is preserved at tag `research-v1-checkpoint` (commit
+`62d7e2a`). Its experiment runners and conclusion-oriented research documents were
+removed from the active tree; existing exemplars and ignored generated data were
+preserved. For example, `git show research-v1-checkpoint:docs/RESEARCH_PLAN.md`
+reads the old plan without restoring the old machinery.

@@ -1,33 +1,69 @@
+"""One JSONL row per message; exact text and provenance survive processing."""
 from __future__ import annotations
 
-from dataclasses import dataclass, field, asdict
-from typing import Any
+import hashlib
+import json
+from dataclasses import asdict, dataclass, field
+from pathlib import Path
 
-# Channels are the *kind of text* we measure. Keep this list small and stable; it is the main
-# grouping variable in every plot.
-CHANNELS = (
-    "subagent_prompt",     # parent agent -> child agent (spawn message, follow-up instruction)
-    "subagent_reply",      # child agent -> parent agent (final report / wait output)
-    "reasoning_raw",       # raw chain of thought (only open-weight models, or published excerpts)
-    "reasoning_summary",   # provider-generated summary of reasoning (OpenAI summary / Claude display=summarized)
-    "assistant_message",   # text addressed to the human user
-    "user_message",        # human-written text (a human-legibility reference distribution)
-)
+
+def digest(value) -> str:
+    return hashlib.sha256(json.dumps(value, sort_keys=True, ensure_ascii=False).encode()).hexdigest()
+
+
+def read_jsonl(path):
+    with Path(path).open(encoding="utf-8") as fh:
+        for line_number, line in enumerate(fh, 1):
+            if line.strip():
+                try:
+                    yield json.loads(line)
+                except json.JSONDecodeError as exc:
+                    raise ValueError(f"{path}:{line_number}: invalid JSON") from exc
+
+
+def write_jsonl(path, rows):
+    path = Path(path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    temporary = path.with_suffix(path.suffix + ".tmp")
+    with temporary.open("w", encoding="utf-8") as fh:
+        for row in rows:
+            fh.write(json.dumps(row, ensure_ascii=False, allow_nan=False) + "\n")
+    temporary.replace(path)
 
 
 @dataclass
 class Sample:
-    """One unit of text to be measured."""
-
     id: str
-    provider: str            # 'openai' | 'anthropic' | 'google' | 'open' | 'human'
-    model: str               # API model id or best-known name, e.g. 'gpt-5.5', 'claude-opus-5'
-    channel: str             # one of CHANNELS
+    provider: str
+    model: str
+    channel: str
     text: str
-    source: str              # 'codex_rollout' | 'claude_code_transcript' | 'api_replay' | 'screenshot' | ...
-    timestamp: str | None = None   # ISO-8601 when the text was generated
+    source: str
+    timestamp: str | None = None
     session_id: str | None = None
-    meta: dict[str, Any] = field(default_factory=dict)
+    context_id: str | None = None
+    status: str = "ok"  # ok, unobservable, missing, error
+    meta: dict = field(default_factory=dict)
 
-    def to_dict(self) -> dict[str, Any]:
+    def __post_init__(self):
+        if not self.id or not isinstance(self.text, str):
+            raise ValueError("Samples need a nonempty id and string text")
+        if self.status not in {"ok", "unobservable", "missing", "error"}:
+            raise ValueError(f"Unknown sample status: {self.status}")
+        self.meta = self.meta or {}
+
+    def to_dict(self):
         return asdict(self)
+
+
+def unique_samples(samples):
+    """Collapse copies of the same event ID, never repeated text across experiments."""
+    seen = {}
+    for sample in samples:
+        row = sample.to_dict()
+        if sample.id in seen:
+            if seen[sample.id] != row:
+                raise ValueError(f"Conflicting records for sample {sample.id}")
+            continue
+        seen[sample.id] = row
+        yield sample

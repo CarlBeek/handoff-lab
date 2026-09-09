@@ -1,60 +1,59 @@
-"""Reference-language-model legibility: bits per character under a fixed, open, pinned model.
-
-This is the middle ground between hand-written surface statistics and LLM judges: model-based,
-but deterministic and fully reproducible (pin the model revision). Report bits/char rather than
-perplexity so numbers are comparable across texts of different length and across tokenizers.
-"""
+"""Pinned reference-LM surprisal with correct shifted-label overlap accounting."""
 from __future__ import annotations
 
 import math
 from functools import lru_cache
 
+MODEL = "gpt2"
+REVISION = "607a30d783dfa663caf39e06633721c8d4cfcd7e"
+VERSION = "surprisal-v2-bos"
+
 
 @lru_cache(maxsize=2)
-def _load(model_name: str, revision: str | None):
+def load(model_name=MODEL, revision=REVISION, device="auto"):
     import torch
     from transformers import AutoModelForCausalLM, AutoTokenizer
 
-    device = "mps" if torch.backends.mps.is_available() else ("cuda" if torch.cuda.is_available() else "cpu")
-    tok = AutoTokenizer.from_pretrained(model_name, revision=revision)
+    if device == "auto":
+        device = "mps" if torch.backends.mps.is_available() else "cuda" if torch.cuda.is_available() else "cpu"
+    tokenizer = AutoTokenizer.from_pretrained(model_name, revision=revision)
     model = AutoModelForCausalLM.from_pretrained(model_name, revision=revision).to(device).eval()
-    return tok, model, device
+    return tokenizer, model, device
 
 
-def bits_per_char(text: str, model_name: str = "gpt2", revision: str | None = None, stride: int = 512) -> dict:
-    """Total negative log-likelihood of `text` under the reference LM, normalised per character.
-
-    Uses a sliding window so long texts are scored with full context up to the model's limit.
-    Returns bits/char, nats/token, and token count.
-    """
+def bits_per_char(text, model_name=MODEL, revision=REVISION, stride=512, device="auto"):
     import torch
 
-    tok, model, device = _load(model_name, revision)
-    ids = tok(text, return_tensors="pt").input_ids.to(device)
-    max_len = getattr(model.config, "n_positions", None) or getattr(model.config, "max_position_embeddings", 1024)
-    n = ids.size(1)
-    nll = 0.0
-    scored = 0
-    prev_end = 0
-    with torch.no_grad():
-        for begin in range(0, n, stride):
-            end = min(begin + max_len, n)
-            target_len = end - prev_end
+    tokenizer, model, device = load(model_name, revision, device)
+    token_ids = tokenizer.encode(text, add_special_tokens=False)
+    limit = getattr(model.config, "n_positions", None) or model.config.max_position_embeddings
+    if not 1 <= stride < limit:
+        raise ValueError(f"stride must be between 1 and {limit - 1}")
+    bos = tokenizer.bos_token_id
+    if bos is None:
+        raise ValueError("The reference tokenizer must define a BOS token")
+    ids = torch.tensor([[bos] + token_ids], device=device)
+    total_bits, scored, previous_end = 0.0, 0, 0
+    with torch.inference_mode():
+        for begin in range(0, len(token_ids) + 1, stride):
+            end = min(begin + limit, ids.shape[1])
             chunk = ids[:, begin:end]
             labels = chunk.clone()
-            labels[:, :-target_len] = -100
-            out = model(chunk, labels=labels)
-            # HF averages over the labelled tokens; multiply back to a sum.
-            n_labelled = int((labels != -100).sum().item()) - 1  # first labelled token has no prediction
-            n_labelled = max(n_labelled, 1)
-            nll += out.loss.item() * n_labelled
-            scored += n_labelled
-            prev_end = end
-            if end == n:
+            labels[:, :max(1, previous_end - begin)] = -100
+            count = int((labels[:, 1:] != -100).sum().item())
+            if count:
+                loss = model(chunk, labels=labels).loss.item()
+                if not math.isfinite(loss):
+                    raise ValueError("Reference model returned nonfinite loss")
+                total_bits += loss * count / math.log(2)
+                scored += count
+            previous_end = end
+            if end == ids.shape[1]:
                 break
-    return {
-        "ref_model": model_name,
-        "ref_tokens": n,
-        "ref_nats_per_token": nll / max(1, scored),
-        "ref_bits_per_char": nll / math.log(2) / max(1, len(text)),
-    }
+    if scored != len(token_ids):
+        raise AssertionError(f"Scored {scored} of {len(token_ids)} tokens")
+    return {"total_bits": total_bits, "tokens": scored,
+            "bits_per_char": total_bits / len(text) if text else None,
+            "bits_per_token": total_bits / scored if scored else None,
+            "ref_model": model_name, "ref_revision": revision, "device": device,
+            "stride": stride, "scorer_version": VERSION}

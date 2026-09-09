@@ -1,64 +1,50 @@
-"""Claude Code session transcripts -> Samples.
+"""Import Claude Code events; preserve producing-model and parent/child provenance."""
+from pathlib import Path
 
-Claude Code writes one JSONL per session under ~/.claude/projects/<encoded-cwd>/<session>.jsonl.
-Assistant records carry `message.model` and a content list of blocks: `text`, `thinking`,
-`tool_use` (the `Agent` tool's `prompt` input is the parent -> sub-agent message).
-Sub-agent turns are flagged `isSidechain: true` in the same directory.
-"""
-from __future__ import annotations
-
-import glob
-import json
-import os
-from collections.abc import Iterator
-
-from ..schema import Sample
-
-SUBAGENT_TOOLS = {"Agent", "Task"}
+from ..schema import Sample, read_jsonl
 
 
-def iter_samples(root: str = "~/.claude/projects") -> Iterator[Sample]:
-    for path in sorted(glob.glob(os.path.join(os.path.expanduser(root), "**", "*.jsonl"), recursive=True)):
-        session = os.path.splitext(os.path.basename(path))[0]
-        with open(path, encoding="utf-8", errors="replace") as fh:
-            for i, line in enumerate(fh):
-                try:
-                    r = json.loads(line)
-                except json.JSONDecodeError:
+def iter_samples(root="~/.claude/projects"):
+    for path in sorted(Path(root).expanduser().rglob("*.jsonl")):
+        # Streaming snapshots reuse message IDs: retain the final snapshot of each block.
+        samples = {}
+        for i, record in enumerate(read_jsonl(path)):
+            if record.get("type") != "assistant":
+                continue
+            msg = record.get("message") or {}
+            content = msg.get("content") or []
+            if isinstance(content, str):
+                content = [{"type": "text", "text": content}]
+            if not isinstance(content, list):
+                continue
+            child = record.get("isSidechain") or "subagents" in path.parts
+            session = record.get("sessionId") or path.stem
+            for j, block in enumerate(content):
+                if not isinstance(block, dict):
                     continue
-                if r.get("type") not in ("assistant", "user"):
-                    continue
-                msg = r.get("message") or {}
-                model = msg.get("model") or "unknown"
-                ts = r.get("timestamp")
-                sidechain = bool(r.get("isSidechain"))
-                content = msg.get("content")
-                if isinstance(content, str):
-                    content = [{"type": "text", "text": content}]
-                if not isinstance(content, list):
-                    continue
-                for j, b in enumerate(content):
-                    if not isinstance(b, dict):
-                        continue
-                    bt = b.get("type")
-                    base = dict(id=f"cc:{session}:{i}:{j}", provider="anthropic", model=model,
-                                source="claude_code_transcript", timestamp=ts, session_id=session,
-                                meta={"sidechain": sidechain, "path": path, "cwd": r.get("cwd")})
-                    if r["type"] == "assistant" and bt == "tool_use" and b.get("name") in SUBAGENT_TOOLS:
-                        inp = b.get("input") or {}
-                        text = inp.get("prompt") or ""
-                        if text:
-                            base["meta"].update(subagent_type=inp.get("subagent_type"), description=inp.get("description"))
-                            yield Sample(channel="subagent_prompt", text=text, **base)
-                    elif r["type"] == "assistant" and bt == "thinking" and (b.get("thinking") or "").strip():
-                        # Claude 4.6+ never returns raw thinking; anything visible is a summary.
-                        yield Sample(channel="reasoning_summary", text=b["thinking"], **base)
-                    elif r["type"] == "assistant" and bt == "text" and (b.get("text") or "").strip():
-                        yield Sample(channel="subagent_reply" if sidechain else "assistant_message", text=b["text"], **base)
-                    elif r["type"] == "user" and bt == "text" and (b.get("text") or "").strip() and not sidechain:
-                        # Human-authored text (skip tool results and system-injected content).
-                        t = b["text"]
-                        if t.startswith("<") or "system-reminder" in t[:200]:
-                            continue
-                        base.update(provider="human", model="human")
-                        yield Sample(channel="user_message", text=t, **base)
+                text, channel, status = "", None, "ok"
+                if block.get("type") == "tool_use":
+                    name, inp = block.get("name"), block.get("input") or {}
+                    if name in {"Agent", "Task"}:
+                        text, channel = inp.get("prompt") or "", "subagent_prompt"
+                    elif name == "SendMessage":
+                        text = inp.get("content") or inp.get("message") or ""
+                        channel = "interagent_message"
+                elif block.get("type") == "thinking":
+                    text, channel = block.get("thinking") or "", "reasoning_summary"
+                elif block.get("type") == "redacted_thinking":
+                    channel, status = "reasoning_unavailable", "unobservable"
+                elif block.get("type") == "text":
+                    text = block.get("text") or ""
+                    channel = ("subagent_reply" if msg.get("stop_reason") == "end_turn" else "subagent_message") if child else "assistant_message"
+                if channel:
+                    if not isinstance(text, str):
+                        text, status = "", "error"
+                    if not text.strip() and status == "ok":
+                        status = "missing"
+                    sid = f"claude:{session}:{path.stem}:{msg.get('id') or record.get('uuid') or i}:{j}"
+                    samples[sid] = Sample(id=sid, provider="anthropic", model=msg.get("model") or "unknown",
+                        channel=channel, text=text, status=status, source="claude_code_transcript", timestamp=record.get("timestamp"),
+                        session_id=session, meta={"path": str(path), "line": i + 1, "cwd": record.get("cwd"),
+                                                 "sidechain": bool(child), "agent_id": record.get("agentId")})
+        yield from samples.values()

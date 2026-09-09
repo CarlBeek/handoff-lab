@@ -1,1 +1,1 @@
-from .surface import surface_metrics, deglue, segment_run  # noqa: F401
+"""Reference surprise, spacing diagnostics, and an optional passage reader."""

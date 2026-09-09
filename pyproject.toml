@@ -1,20 +1,23 @@
 [project]
 name = "cotlegibility"
-version = "0.1.0"
-description = "Measuring the legibility of chain-of-thought and inter-agent messages across frontier models"
+version = "0.2.0"
+description = "A small, inspectable study of reasoning and agent-message intelligibility"
 requires-python = ">=3.11"
 dependencies = [
-    "tiktoken>=0.9",
-    "wordfreq>=3.1",
-    "pandas>=2.2",
-    "numpy",
-    "matplotlib",
+    "wordfreq==3.1.1",
+    "matplotlib==3.11.1",
 ]
 
 [project.optional-dependencies]
-ppl = ["torch", "transformers"]
-api = ["anthropic>=1.0", "openai>=1.60"]
+reference = ["torch==2.14.0", "transformers==5.17.0"]
+api = ["anthropic==1.4.0", "openai==3.11.0"]
 dev = ["pytest"]
+
+[project.scripts]
+cot-study = "cotlegibility.__main__:main"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
 
 [build-system]
 requires = ["setuptools>=68"]
