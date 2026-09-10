@@ -5,7 +5,22 @@
     "release_date": "2026-04-23",
     "release_source": "https://openai.com/index/introducing-gpt-5-5/",
     "release_note": "Family public launch; API availability followed April 24. Not the date of a later alias snapshot.",
-    "parameters": {"reasoning": {"effort": "medium"}, "max_output_tokens": 8192}
+    "parameters": {
+      "reasoning": {
+        "effort": "medium"
+      },
+      "max_output_tokens": 8192
+    },
+    "model": "gpt-5.5",
+    "vendor": "OpenAI",
+    "api": "responses",
+    "providers": [
+      "openai",
+      "openrouter"
+    ],
+    "response_models": [
+      "gpt-5.5"
+    ]
   },
   {
     "id": "gpt-5.6-sol",
@@ -13,7 +28,22 @@
     "release_date": "2026-07-09",
     "release_source": "https://openai.com/index/gpt-5-6/",
     "release_note": "Family general-availability launch, not the June 26 limited preview or a later alias snapshot.",
-    "parameters": {"reasoning": {"effort": "medium"}, "max_output_tokens": 8192}
+    "parameters": {
+      "reasoning": {
+        "effort": "medium"
+      },
+      "max_output_tokens": 8192
+    },
+    "model": "gpt-5.6-sol",
+    "vendor": "OpenAI",
+    "api": "responses",
+    "providers": [
+      "openai",
+      "openrouter"
+    ],
+    "response_models": [
+      "gpt-5.6-sol"
+    ]
   },
   {
     "id": "gpt-6-astra",
@@ -21,6 +51,207 @@
     "release_date": "2026-09-03",
     "release_source": "https://openai.com/index/safety-overview-gpt-6-astra/",
     "release_note": "Family public launch announcement with staged rollout, not a guarantee about a later alias snapshot.",
-    "parameters": {"reasoning": {"effort": "medium"}, "max_output_tokens": 8192}
+    "parameters": {
+      "reasoning": {
+        "effort": "medium"
+      },
+      "max_output_tokens": 8192
+    },
+    "model": "gpt-6-astra",
+    "vendor": "OpenAI",
+    "api": "responses",
+    "providers": [
+      "openai",
+      "openrouter"
+    ],
+    "response_models": [
+      "gpt-6-astra"
+    ]
+  },
+  {
+    "id": "claude-sonnet-4.6",
+    "model": "claude-sonnet-4.6",
+    "label": "Claude Sonnet 4.6",
+    "vendor": "Anthropic",
+    "api": "messages",
+    "release_date": "2026-02-17",
+    "release_source": "https://platform.claude.com/docs/en/models/sonnet-4-6/overview",
+    "release_note": "Family public launch, not collection date or proof of an immutable served snapshot.",
+    "providers": [
+      "anthropic",
+      "openrouter"
+    ],
+    "response_models": [
+      "claude-sonnet-4.6",
+      "claude-sonnet-4-6"
+    ],
+    "parameters": {
+      "thinking": {
+        "type": "adaptive"
+      },
+      "output_config": {
+        "effort": "medium"
+      },
+      "max_tokens": 8192
+    }
+  },
+  {
+    "id": "claude-sonnet-5",
+    "model": "claude-sonnet-5",
+    "label": "Claude Sonnet 5",
+    "vendor": "Anthropic",
+    "api": "messages",
+    "release_date": "2026-06-30",
+    "release_source": "https://platform.claude.com/docs/en/models/sonnet-5/overview",
+    "release_note": "Family public launch, not collection date or proof of an immutable served snapshot.",
+    "providers": [
+      "anthropic",
+      "openrouter"
+    ],
+    "response_models": [
+      "claude-sonnet-5"
+    ],
+    "parameters": {
+      "thinking": {
+        "type": "adaptive"
+      },
+      "output_config": {
+        "effort": "medium"
+      },
+      "max_tokens": 8192
+    }
+  },
+  {
+    "id": "claude-opus-4.6",
+    "model": "claude-opus-4.6",
+    "label": "Claude Opus 4.6",
+    "vendor": "Anthropic",
+    "api": "messages",
+    "release_date": "2026-02-05",
+    "release_source": "https://platform.claude.com/docs/en/models/opus-4-6/overview",
+    "release_note": "Family public launch, not collection date or proof of an immutable served snapshot.",
+    "providers": [
+      "anthropic",
+      "openrouter"
+    ],
+    "response_models": [
+      "claude-opus-4.6",
+      "claude-opus-4-6"
+    ],
+    "parameters": {
+      "thinking": {
+        "type": "adaptive"
+      },
+      "output_config": {
+        "effort": "medium"
+      },
+      "max_tokens": 8192
+    }
+  },
+  {
+    "id": "claude-opus-4.8",
+    "model": "claude-opus-4.8",
+    "label": "Claude Opus 4.8",
+    "vendor": "Anthropic",
+    "api": "messages",
+    "release_date": "2026-05-28",
+    "release_source": "https://platform.claude.com/docs/en/models/opus-4-8/overview",
+    "release_note": "Family public launch, not collection date or proof of an immutable served snapshot.",
+    "providers": [
+      "anthropic",
+      "openrouter"
+    ],
+    "response_models": [
+      "claude-opus-4.8",
+      "claude-opus-4-8"
+    ],
+    "parameters": {
+      "thinking": {
+        "type": "adaptive"
+      },
+      "output_config": {
+        "effort": "medium"
+      },
+      "max_tokens": 8192
+    }
+  },
+  {
+    "id": "claude-opus-5",
+    "model": "claude-opus-5",
+    "label": "Claude Opus 5",
+    "vendor": "Anthropic",
+    "api": "messages",
+    "release_date": "2026-07-24",
+    "release_source": "https://platform.claude.com/docs/en/models/opus-5/overview",
+    "release_note": "Family public launch, not collection date or proof of an immutable served snapshot.",
+    "providers": [
+      "anthropic",
+      "openrouter"
+    ],
+    "response_models": [
+      "claude-opus-5"
+    ],
+    "parameters": {
+      "thinking": {
+        "type": "adaptive"
+      },
+      "output_config": {
+        "effort": "medium"
+      },
+      "max_tokens": 8192
+    }
+  },
+  {
+    "id": "claude-fable-5",
+    "model": "claude-fable-5",
+    "label": "Claude Fable 5",
+    "vendor": "Anthropic",
+    "api": "messages",
+    "release_date": "2026-06-09",
+    "release_source": "https://platform.claude.com/docs/en/models/fable-5/overview",
+    "release_note": "Family public launch, not collection date or proof of an immutable served snapshot.",
+    "providers": [
+      "anthropic",
+      "openrouter"
+    ],
+    "response_models": [
+      "claude-fable-5"
+    ],
+    "parameters": {
+      "thinking": {
+        "type": "adaptive"
+      },
+      "output_config": {
+        "effort": "medium"
+      },
+      "max_tokens": 8192
+    }
+  },
+  {
+    "id": "claude-fable-5.1",
+    "model": "claude-fable-5.1",
+    "label": "Claude Fable 5.1",
+    "vendor": "Anthropic",
+    "api": "messages",
+    "release_date": "2026-09-01",
+    "release_source": "https://platform.claude.com/docs/en/models/fable-5-1/overview",
+    "release_note": "Family public launch, not collection date or proof of an immutable served snapshot.",
+    "providers": [
+      "anthropic",
+      "openrouter"
+    ],
+    "response_models": [
+      "claude-fable-5.1",
+      "claude-fable-5-1"
+    ],
+    "parameters": {
+      "thinking": {
+        "type": "adaptive"
+      },
+      "output_config": {
+        "effort": "medium"
+      },
+      "max_tokens": 8192
+    }
   }
 ]

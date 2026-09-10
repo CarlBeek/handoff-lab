@@ -10,7 +10,7 @@ import pandas as pd
 import pytest
 
 from scripts import collect
-from test_collection import contexts, models, fake_client, response
+from test_collection import contexts, models, make_model, fake_client, response, wire_headers
 
 ROOT = Path(__file__).resolve().parents[1]
 NOTEBOOK = ROOT / "notebooks/analysis.ipynb"
@@ -28,7 +28,7 @@ def analysis():
 
 
 def catalog():
-    return models() + [{**models()[0], "id": "second-fixture", "label": "Second fixture",
+    return models() + [{**make_model("second-fixture"), "label": "Second fixture",
                        "release_date": "2026-02-01"}]
 
 
@@ -45,7 +45,7 @@ def measured():
 
 @pytest.mark.parametrize("change,expected", [
     ("missing", "not_attempted"), ("started", "started"), ("error", "error"),
-    ("incomplete", "incomplete_response"), ("missing_model", "missing_model_identity"),
+    ("incomplete", "incomplete_response"), ("missing_model", "invalid_provenance"),
     ("invalid_json", "invalid_handoff"), ("extra_call", "invalid_handoff"),
     ("wrong_tool", "invalid_handoff"), ("blank", "invalid_handoff"),
     ("extra_argument", "invalid_handoff"), ("valid", "ok"),
@@ -53,7 +53,7 @@ def measured():
 def test_extraction_preserves_failures(analysis, change, expected):
     spec = collect.plan(contexts()[:1], models(), "pilot")[0]
     raw = response(message="Inspectthecache `identifier`").model_dump()
-    record = {"state": "finished", "response": raw}
+    record = {"state": "finished", "response": raw, "response_headers": wire_headers()}
     if change == "missing":
         record = {}
     elif change in {"started", "error"}:
@@ -121,7 +121,7 @@ def test_load_run_validates_plan_and_includes_unattempted(analysis, tmp_path):
     manifest, rows = analysis.load_run(tmp_path)
     assert len(rows) == 3 and [r["status"] for r in rows].count("not_attempted") == 2
     assert analysis.load_run(tmp_path / "missing") == (None, [])
-    path = next(tmp_path.glob("request-*.json"))
+    path = next(tmp_path.rglob("request-*.json"))
     record = json.loads(path.read_text())
     record["request"]["model"] = "changed"
     path.write_text(json.dumps(record))
@@ -129,15 +129,20 @@ def test_load_run_validates_plan_and_includes_unattempted(analysis, tmp_path):
         analysis.load_run(tmp_path)
 
 
-@pytest.mark.parametrize("populated", [False, True])
-def test_notebook_runs_all_without_network_or_paid_calls(tmp_path, populated):
+@pytest.mark.parametrize("panel_size", [0, 2, 10])
+def test_notebook_runs_all_without_network_or_paid_calls(tmp_path, panel_size):
     run = tmp_path / "raw"
-    if populated:
+    if panel_size:
+        panel = catalog() if panel_size == 2 else collect.read_json(ROOT / "data/models.json")
         seen = []
         def reply(**body):
             seen.append(body)
-            return response(model=body["model"], message="Inspect the cache." + " Include evidence." * len(seen))
-        collect.collect(contexts(), catalog(), run, execute=True, max_calls=6, client=fake_client(reply))
+            message = "Inspect the cache." + " Include evidence." * (len(seen) % 3 + 1)
+            if "messages" in body:
+                return {"model": body["model"], "stop_reason": "tool_use", "content": [
+                    {"type": "tool_use", "name": "spawn_agent", "input": {"message": message}}]}
+            return response(model=body["model"], message=message)
+        collect.collect(contexts(), panel, run, execute=True, max_calls=panel_size * 3, client=fake_client(reply))
     notebook = nbformat.read(NOTEBOOK, as_version=4)
     for cell in notebook.cells:
         if cell.id == "setup":
@@ -152,5 +157,91 @@ def test_notebook_runs_all_without_network_or_paid_calls(tmp_path, populated):
     output = tmp_path / "analysis"
     assert (output / "surprisal.png").stat().st_size > 1000
     summary = json.loads((output / "summary.json").read_text())
-    assert summary["n_matched_tasks"] == (3 if populated else 0)
-    assert len(summary["points"]) == (2 if populated else 0)
+    assert summary["n_matched_tasks"] == (3 if panel_size else 0)
+    assert len(summary["points"]) == panel_size
+    if panel_size == 10:
+        print(f"Synthetic ten-model plot: {output / 'surprisal.png'}")
+
+
+def test_messages_extraction_and_truncation(analysis):
+    model = make_model("claude-fable-5.1", "messages")
+    model["response_models"].append("claude-fable-5-1")
+    spec = collect.plan(contexts()[:1], [model], "pilot")[0]
+    raw = {"model": "claude-fable-5-1", "stop_reason": "tool_use", "content": [
+        {"type": "thinking", "thinking": "Not the measured artifact"},
+        {"type": "tool_use", "name": "spawn_agent", "input": {"message": "Inspectthecache."}}],
+        "usage": {"input_tokens": 100, "output_tokens": 40,
+                  "cache_read_input_tokens": 20, "cache_creation_input_tokens": 10}}
+    record = {"state": "finished", "response": raw, "response_headers": wire_headers("anthropic")}
+    row = analysis.extract_handoff(spec, record)
+    assert row["status"] == "ok" and row["text"] == "Inspectthecache."
+    assert row["cost_usd"] == .001 and row["cache_read_input_tokens"] == 20
+    assert row["reasoning_tokens"] is None  # Never invent a breakdown.
+    raw["stop_reason"] = "max_tokens"
+    assert analysis.extract_handoff(spec, record)["status"] == "incomplete_response"
+    raw["stop_reason"] = "refusal"
+    assert analysis.extract_handoff(spec, record)["status"] == "refusal"
+    raw["stop_reason"] = "tool_use"
+    record["response_headers"]["x-si-truncated"] = "1"
+    assert analysis.extract_handoff(spec, record)["status"] == "invalid_provenance"
+
+
+def test_load_combines_new_models_and_selects_panel_and_task_prefix(analysis, tmp_path):
+    collect.collect(contexts(), models(), tmp_path, tasks=2, execute=True, max_calls=2, client=fake_client())
+    before, rows = analysis.load_run(tmp_path)
+    assert len(before["models"]) == 1 and sum(r["status"] == "ok" for r in rows) == 2
+    newer = make_model("sixth-model")
+    collect.collect(contexts(), [newer], tmp_path, tasks=1, execute=True, max_calls=1,
+                    client=fake_client(lambda **body: response(model=body["model"])))
+    combined, rows = analysis.load_run(tmp_path)
+    assert len(combined["models"]) == 2 and len(rows) == 6
+    selected, subset = analysis.load_run(tmp_path, model_ids=[models()[0]["id"]], task_limit=2)
+    assert selected["models"] == before["models"]
+    assert len(subset) == 2 and all(r["status"] == "ok" for r in subset)
+    with pytest.raises(ValueError, match="no saved run"):
+        analysis.load_run(tmp_path, model_ids=["unknown-model"])
+    path = tmp_path / "sixth-model" / "run.json"
+    manifest = json.loads(path.read_text())
+    manifest["study_hash"] = "wrong-study"
+    path.write_text(json.dumps(manifest))
+    with pytest.raises(ValueError, match="different study"):
+        analysis.load_run(tmp_path)
+
+
+def test_legacy_run_still_readable(analysis, tmp_path):
+    spec = collect.plan(contexts()[:1], models(), "pilot")[0]
+    for key in ("id", "study_hash", "provider", "api", "parameters", "response_models"):
+        spec.pop(key)
+    spec["protocol"] = "swe-handoff-v1"
+    spec["id"] = collect.digest(spec)
+    manifest = {"models": models(), "requests": [spec], "protocol": spec["protocol"], "split": "pilot"}
+    (tmp_path / "run.json").write_text(json.dumps(manifest))
+    (tmp_path / f"request-{spec['id']}.json").write_text(json.dumps({**spec, "state": "finished",
+                                                                   "response": response().model_dump()}))
+    loaded, rows = analysis.load_run(tmp_path)
+    assert loaded["protocol"] == "swe-handoff-v1" and rows[0]["status"] == "ok"
+
+
+def test_audit_rechecked_not_only_saved_flag(analysis):
+    spec = collect.plan(contexts()[:1], models(), "pilot")[0]
+    record = {"state": "finished", "response": response().model_dump(),
+              "response_headers": {**wire_headers(), "x-si-adapted-params": "reasoning_effort"},
+              "validation_errors": []}
+    assert analysis.extract_handoff(spec, record)["status"] == "invalid_provenance"
+
+
+@pytest.mark.parametrize("usage", [[], {"output_tokens_details": []}])
+def test_malformed_optional_usage_does_not_lose_handoff(analysis, usage):
+    spec = collect.plan(contexts(), models(), "pilot")[0]
+    raw = response().model_dump()
+    raw["usage"] = usage
+    row = analysis.extract_handoff(spec, {"state": "finished", "response": raw,
+                                          "response_headers": wire_headers()})
+    assert row["status"] == "ok" and row["reasoning_tokens"] is None
+
+
+def test_mixed_directory_layout_refused(analysis, tmp_path):
+    collect.collect(contexts(), models(), tmp_path, execute=True, max_calls=1, client=fake_client())
+    (tmp_path / "run.json").write_text("{}")
+    with pytest.raises(ValueError, match="separate directories"):
+        analysis.load_run(tmp_path)
