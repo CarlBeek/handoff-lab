@@ -328,10 +328,11 @@ def test_execute_guards_and_cli_selection(monkeypatch, tmp_path):
 def test_catalog_has_requested_panel():
     catalog = collect.read_json(collect.ROOT / "data/models.json")
     collect.validate_models(catalog)
-    assert len(catalog) == 10
+    assert len(catalog) == 8
     ids = {m["id"] for m in catalog}
     assert {"claude-fable-5", "claude-fable-5.1"} <= ids
     assert not any("4.5" in m for m in ids)
+    assert not any("sonnet" in m.lower() for m in ids)
 
 
 def test_native_messages_wire_and_response(tmp_path):

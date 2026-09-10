@@ -1,5 +1,5 @@
 [project]
-name = "cotlegibility"
+name = "handoff-lab"
 version = "0.4.0"
 description = "A small matched study of agent-handoff surprisal"
 requires-python = ">=3.11"
@@ -18,6 +18,10 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = ["pytest>=8", "nbclient>=0.10"]
+
+[project.urls]
+Repository = "https://github.com/CarlBeek/handoff-lab"
+Issues = "https://github.com/CarlBeek/handoff-lab/issues"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

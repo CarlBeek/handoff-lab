@@ -4,6 +4,12 @@ __pycache__/
 *.pyc
 *.egg-info/
 .pytest_cache/
+.ruff_cache/
+.coverage
+.coverage.*
+htmlcov/
+build/
+dist/
 .DS_Store
 
 # generated outputs and private data: metrics CSVs carry previews of local sessions, harness runs hold transcripts
@@ -12,7 +18,17 @@ data/raw/
 data/contexts.jsonl
 .ipynb_checkpoints/
 notebooks/.ipynb_checkpoints/
+
+# local credentials
 .env
+.env.*
+!.env.example
+.envrc
+.netrc
+*.pem
+*.key
+*.p12
+*.pfx
 
 # saved X/Twitter page that seeded the first exemplar (raw HTML, kept local)
 /1

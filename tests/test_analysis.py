@@ -129,7 +129,7 @@ def test_load_run_validates_plan_and_includes_unattempted(analysis, tmp_path):
         analysis.load_run(tmp_path)
 
 
-@pytest.mark.parametrize("panel_size", [0, 2, 10])
+@pytest.mark.parametrize("panel_size", [0, 2, 8])
 def test_notebook_runs_all_without_network_or_paid_calls(tmp_path, panel_size):
     run = tmp_path / "raw"
     if panel_size:
@@ -159,8 +159,8 @@ def test_notebook_runs_all_without_network_or_paid_calls(tmp_path, panel_size):
     summary = json.loads((output / "summary.json").read_text())
     assert summary["n_matched_tasks"] == (3 if panel_size else 0)
     assert len(summary["points"]) == panel_size
-    if panel_size == 10:
-        print(f"Synthetic ten-model plot: {output / 'surprisal.png'}")
+    if panel_size == 8:
+        print(f"Synthetic eight-model plot: {output / 'surprisal.png'}")
 
 
 def test_messages_extraction_and_truncation(analysis):

@@ -1,4 +1,6 @@
-# Agent-handoff surprisal
+# Handoff Lab
+
+Measuring agent-handoff surprisal across model generations.
 
 A small, controlled study of whether newer models write less predictable
 agent-to-agent messages. **One metric: pinned GPT-2 bits per character of prose.**
@@ -61,7 +63,7 @@ issue text adds more. Do not budget these as 2,000-token prompts.
 python scripts/collect.py
 ```
 
-Default: **offline** preview of five pilot tasks × ten models = 50 requests.
+Default: **offline** preview of five pilot tasks × eight models = 40 requests.
 It needs no API key and writes nothing. To check availability and rough prices,
 read the public Surplus order books (still no paid requests):
 
@@ -74,8 +76,8 @@ Collection requires setting `SURPLUS_API_KEY` in your environment. Start with on
 request per model, inspect the saved responses, then finish the five-task pilot:
 
 ```sh
-python scripts/collect.py --execute --max-calls 10
-python scripts/collect.py --execute --max-calls 40
+python scripts/collect.py --execute --max-calls 8
+python scripts/collect.py --execute --max-calls 32
 ```
 
 All paid requests go to **Surplus**, using its Responses endpoint for OpenAI and
@@ -91,8 +93,8 @@ stops; there is no runtime provider/model fallback or automatic retry. This pins
 the provider family, **not an individual seller, price, or immutable model**.
 See [Surplus routing controls](https://www.surplusintelligence.ai/docs/marketplace/routing-controls).
 
-The panel is GPT-5.5, GPT-5.6 Sol, GPT-6 Astra; Claude Sonnet 4.6 and 5; Claude
-Opus 4.6, 4.8, and 5; Claude Fable 5 and 5.1. No 4.5-class models. Each requests
+The panel is GPT-5.5, GPT-5.6 Sol, GPT-6 Astra; Claude Opus 4.6, 4.8, and 5;
+Claude Fable 5 and 5.1. No Sonnet or 4.5-class models. Each requests
 medium effort and an 8,192-token output cap. OpenAI uses `reasoning.effort`;
 Anthropic uses adaptive thinking and `output_config.effort`. Equal effort labels
 do not imply equal compute. Native API shapes follow
@@ -158,7 +160,7 @@ from the main study. After inspecting it:
 
 ```sh
 python scripts/collect.py --split main --quote
-python scripts/collect.py --split main --execute --max-calls 250
+python scripts/collect.py --split main --execute --max-calls 200
 ```
 
 The default main target is **25 tasks per model**, drawn from a frozen ordered
@@ -166,7 +168,7 @@ set of 50. Later, extend to 50 using the **same directory**:
 
 ```sh
 python scripts/collect.py --split main --tasks 50 --quote
-python scripts/collect.py --split main --tasks 50 --execute --max-calls 250
+python scripts/collect.py --split main --tasks 50 --execute --max-calls 200
 ```
 
 `--tasks` is a cumulative target, not an additional request count. Existing 25-task
@@ -252,6 +254,12 @@ preserved in `data/legacy_contexts.jsonl`; existing `data/exemplars/`,
 `data/sanity.jsonl`, and ignored `out/` data are unchanged and never mixed into
 the new study. Raw requests and notebook exports are Git-ignored; review them
 before sharing.
+
+The public repository includes code, the model catalog, the frozen task-selection
+manifest, synthetic controls, and attributed public excerpts. Generated task
+packets, API responses, local session transcripts, and analysis exports stay local
+by default. Keep credentials in environment variables; local `.env` files are
+ignored and are not loaded automatically by the collector.
 
 ```sh
 python -m pytest -q

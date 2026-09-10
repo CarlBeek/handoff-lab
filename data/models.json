@@ -69,59 +69,6 @@
     ]
   },
   {
-    "id": "claude-sonnet-4.6",
-    "model": "claude-sonnet-4.6",
-    "label": "Claude Sonnet 4.6",
-    "vendor": "Anthropic",
-    "api": "messages",
-    "release_date": "2026-02-17",
-    "release_source": "https://platform.claude.com/docs/en/models/sonnet-4-6/overview",
-    "release_note": "Family public launch, not collection date or proof of an immutable served snapshot.",
-    "providers": [
-      "anthropic",
-      "openrouter"
-    ],
-    "response_models": [
-      "claude-sonnet-4.6",
-      "claude-sonnet-4-6"
-    ],
-    "parameters": {
-      "thinking": {
-        "type": "adaptive"
-      },
-      "output_config": {
-        "effort": "medium"
-      },
-      "max_tokens": 8192
-    }
-  },
-  {
-    "id": "claude-sonnet-5",
-    "model": "claude-sonnet-5",
-    "label": "Claude Sonnet 5",
-    "vendor": "Anthropic",
-    "api": "messages",
-    "release_date": "2026-06-30",
-    "release_source": "https://platform.claude.com/docs/en/models/sonnet-5/overview",
-    "release_note": "Family public launch, not collection date or proof of an immutable served snapshot.",
-    "providers": [
-      "anthropic",
-      "openrouter"
-    ],
-    "response_models": [
-      "claude-sonnet-5"
-    ],
-    "parameters": {
-      "thinking": {
-        "type": "adaptive"
-      },
-      "output_config": {
-        "effort": "medium"
-      },
-      "max_tokens": 8192
-    }
-  },
-  {
     "id": "claude-opus-4.6",
     "model": "claude-opus-4.6",
     "label": "Claude Opus 4.6",
