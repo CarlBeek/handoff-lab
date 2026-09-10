@@ -2,6 +2,7 @@
 name = "handoff-lab"
 version = "0.4.0"
 description = "A small matched study of agent-handoff surprisal"
+license = { file = "LICENSE" }
 requires-python = ">=3.11"
 dependencies = [
     "huggingface-hub==1.30.0",

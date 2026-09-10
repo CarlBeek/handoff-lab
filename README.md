@@ -266,3 +266,6 @@ python -m pytest -q
 ```
 
 Tests use fixtures/mocked HTTP responses and never make paid API requests.
+
+Project code is available under the [MIT License](LICENSE). Third-party datasets
+and quoted material retain their original terms.
